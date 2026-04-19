@@ -25,3 +25,15 @@ doc/api/
 
 .flutter-plugins
 .flutter-plugins-dependencies
+
+# Compiled executables
+*.exe
+folio-cli
+folio-cli-linux
+folio-cli-macos
+
+# Debug files
+*debug*.html
+test_login.dart
+debug.py
+
