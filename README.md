@@ -6,9 +6,13 @@ A projekt a szélesebb **Folio ökoszisztéma** (`folio`, `foliomap`, `folioWeb`
 
 ## Főbb funkciók
 - 🏫 **Beépített intézménykereső:** Nem tudod a suli kódját? Keresd meg a neve alapján!
-- 🔐 **Automatikus hitelesítés:** A háttérben lezajló IDP kommunikáció rejtett HTML `<form>` mezőkön keresztül, iOS álcával.
-- 🎯 **Jegyek és adatok lekérdezése:** Másodpercek alatt listázza az utolsó jegyeidet és tanulói információidat.
-- 🌐 **Webes tartalék hitelesítés:** Arra az esetre, ha a Kréta API túlságosan szigorítana az automata bejelentkezésen.
+- 🔐 **Automatikus hitelesítés és Multi-Profil:** Képes több diák profilját is kezelni (Profilváltás), a háttérben biztonságosan tárolva a frissülő tokeneket.
+- 🎯 **Kiterjesztett adatelérés:** Jegyek, órarend, mulasztások, vizsgák, házi feladatok és Kréta üzenetek lekérdezése másodpercek alatt.
+- 📊 **Célátlag kalkulátor:** Kiszámolja, hány darab és milyen jegy kell még ahhoz, hogy elérd a megálmodott tantárgyi átlagot.
+- 🔍 **Globális Kereső:** Egyetlen kulcsszó alapján kereshetsz a jegyeid, házi feladataid és dolgozataid között.
+- 📅 **Naptár Export (ICS) és CSV Export:** Exportáld az órarendedet és a dolgozataidat egyenesen a Google/Apple naptáradba, vagy töltsd le az adataidat CSV formátumban!
+- 🔔 **Windows Háttér-értesítések:** Állíts be egy beépített háttér-démont (Windows Task Scheduler), ami óránként csekkolja, kaptál-e új jegyet vagy házit, és asztali értesítést (Toast Notification) küld!
+- 🎨 **Témák:** Világos és Sötét színtémák, amik tiszteletben tartják a terminálod natív/áttetsző hátterét.
 
 ## Gyors telepítés
 *A csomagkezelőkbe (Scoop, Winget, APT, AUR) való integráció jelenleg folyamatban van.*
@@ -25,23 +29,17 @@ dart pub get
 # Futattás
 dart run
 ```
+*Tipp: Az alkalmazás le is fordítható egyetlen natív .exe fájllá a `dart compile exe bin/folio_cli.dart` paranccsal.*
 
 ## Használat
-Az indítás után egy interaktív, nyilakkal vezérelhető menü fogad (köszönhetően az `interact` csomagnak). Csak kövesd a képernyőn megjelenő utasításokat!
-
-```bash
-==============================
-    Folio CLI (Kréta API)     
-==============================
-? Tudod az intézmény kódját? › 
-❯ Igen, tudom a kódját
-  Nem, keresés név alapján
-```
+Az indítás után egy interaktív, nyilakkal vezérelhető menü fogad. Csak kövesd a képernyőn megjelenő utasításokat!
+Támogatott CLI paraméterek gyors belépéshez és démon futtatáshoz:
+`folio_cli.exe -i <intezmenykod> -u <felhasznalonev> -p <jelszo>` vagy `folio_cli.exe --daemon`
 
 ## További dokumentációk
 Ha elakadtál, vagy mélyebben érdekel a projekt, nézd meg az alábbi leírásokat:
-- 📖 [USER.md](USER.md) - Részletes útmutató felhasználóknak, ha elakadtál a bejelentkezéssel.
-- 🛠️ [DEV.md](DEV.md) - Fejlesztői dokumentáció, fordítási és csomagkezelőkhöz való feltöltési (publish) segédlet.
+- 📖 [USER.md](USER.md) - Részletes útmutató felhasználóknak, funkciók leírása.
+- 🛠️ [DEV.md](DEV.md) - Fejlesztői dokumentáció, fordítási és architektúrális segédlet.
 - 🤝 [CONTRIBUTIONS.md](CONTRIBUTIONS.md) - Ha szeretnél beszállni a fejlesztésbe.
 
 ## Csapat

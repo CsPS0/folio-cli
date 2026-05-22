@@ -37,3 +37,9 @@ folio-cli-macos
 test_login.dart
 debug.py
 
+
+# Local generated and test files
+*.csv
+*.html
+test_*.dart
+scratch/

@@ -1,83 +1,31 @@
 # Fejlesztői Dokumentáció (DEV) 🛠️
 
-Ez a dokumentum a projekt architektúráját, a fordítási folyamatot (compilation) és a különböző csomagkezelőkön (Scoop, Winget, AUR, APT) való publikálás részleteit tartalmazza.
+Ez a leírás a `folio-cli` architektúráját, fejlesztési és buildelési folyamatát foglalja össze.
 
-## Architektúra és Hitelesítés
-A Kréta zárt rendszere miatt hagyományos webes bejelentkezéssel nem érhetőek el a publikus API végpontok (invalid_grant hiba). Ezt a CLI úgy kerüli meg, hogy **teljesen leutánozza a hivatalos iOS alkalmazás** hálózati forgalmát:
-1. Felvesszük a mobilalkalmazás `User-Agent`-jét (`eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0`).
-2. Generálunk egy OAuth2 implicit flow-t egyedi `code_challenge` és `clientId` használatával az `idp.e-kreta.hu` felé.
-3. A háttérben kezeljük a `.AspNetCore.Identity.Application` és `idp.session` sütiket (Cookie state management).
-4. Egy speciális `POST` kérést indítunk az `/Account/Login` végpontra, ahol átadjuk az oktatási azonosítót és a jelszót.
-5. Végül kinyerjük a titkos `code`-ot a Kréta válaszának rejtett `<form>` mezőiből, és ezt beváltjuk a tényleges `accessToken`-re a Kréta WebAPI eléréséhez.
+## Architektúra és Csomagok
 
-## Fordítás natív alkalmazássá (Compilation)
-Ahhoz, hogy a felhasználóknak ne kelljen a teljes Dart SDK-t telepíteniük, a programot natív, önálló (standalone) binárisként osztjuk el.
+Az alkalmazás szigorúan a **Dart** ökoszisztémára épít (nincs Flutter függőség), ezzel garantálva a villámgyors indulást (AOT fordítással).
 
-Windows, Linux és macOS alatt a fordítás azonos paranccsal történik:
+### Kiemelt könyvtárak:
+1. `interact` (v2.1.1 felett): Ez a csomag felel az interaktív terminál-felületért (menük, bevitel, jelszó maszkolás). Hatalmas szerepe van a `Select` és `Confirm` promtok megjelenítésében, amiket be is témeztünk a Folio arculatára (egyedi zöld pipák, nyíl karakterek, terminál-háttér megőrzése).
+2. `http`: A hivatalos Kréta IDP és V3 API-val (Ellenőrző) történő kommunikációra használjuk.
+3. `html`: A webes fallback login során (B módszer) egy vékony OAuth2 wrapper generálásához van benne a projektben, de a natív "IDP-Flow" (A módszer) futása a default és ajánlott.
+4. `args`: A parancssori argumentumok (felhasználónév, jelszó, intézmény) feldolgozásához.
+
+### Fő modulok a `lib/` alatt:
+- `api/client.dart`: Maga a hálózati réteg és az OAuth2 token menedzsment (beleértve a refresh tokent is).
+- `app/cli_app.dart`: A CLI UI vezérlése. Itt laknak a lekérdező ciklusok (`_showGrades`, `_showTimetable`), a Démön hívó kódja (ami a Windows Task Schedulert programozza), a Theme Injektor, valamint a globális kereső iterációja.
+- `utils/`: Segédfájlok
+  - `chart_generator.dart`: Egy ANSI alapú "Bar Chart" generáló, ami százalékosan skálázva vizualizálja az átlagokat a terminál szélességét kitöltve.
+  - `ics_exporter.dart`: A hivatalos RFC 5545 iCalendar szabvány szerint fűzi össze a lekért vizsgákat és órarendi elemeket egy .ics fájlba.
+
+## Kréta API kihívások és Fixek
+A Kréta API V3 (pl. `HaziFeladatok`) rendkívül érzékeny a paraméterezésre. Ha nem kap `datumTol` értéket, akkor egy `500 Internal Server Error`-ral elszáll. Emiatt a lekérdezéseknél beépített 30 napos csúsztatásokat használunk, ha a felhasználó nem szűr dátumra. Emellett az API visszaadott adatszerkezete gyakran eltér a dokumentált formáktól (pl. a `Tantargy` kulcs hol string, hol egy Object/Map). Ezek típusellenőrzését kiterjedten végezzük a kliensben, hogy elkerüljük az exception-öket. 
+Továbbá a Windows PowerShell default Windows-1252 (Latin-1) kódolása miatt az egyedi UTF-8 ANSI és Box-drawing karaktereket (┌─│) explicit kódoltuk le, és elkerültük a hátterek agresszív színezését (`\x1B[48;2;...`).
+
+## Fordítás (Build & Compile)
+Ha szeretnéd teljesen natív, egyetlen `.exe` fájllá alakítani az alkalmazást (hogy Dart futtatókörnyezet nélkül is vihető legyen):
 ```bash
-dart compile exe bin/folio_cli.dart -o folio-cli.exe
+dart compile exe bin/folio_cli.dart
 ```
-Ez létrehoz egy független `folio-cli.exe` (vagy Linuxon `folio-cli`) fájlt.
-
-## Publikálás csomagkezelőkbe
-
-Miután a GitHub Releases alá fel lett töltve a bináris fájl (pl. v1.0.0 kiadás), az alábbi módon vihetjük fel a csomagkezelőkbe:
-
-### 1. Scoop (Windows)
-A Scoop egy JSON manifest fájl alapján működik. Létre kell hozni egy saját GitHub repót (Scoop Bucket), és abba egy `folio-cli.json` fájlt:
-```json
-{
-    "version": "1.0.0",
-    "description": "Folio CLI for Kréta e-napló.",
-    "homepage": "https://github.com/te-neved/folio-cli",
-    "license": "MIT",
-    "url": "https://github.com/te-neved/folio-cli/releases/download/v1.0.0/folio-cli.exe",
-    "hash": "IDE_JÖN_A_SHA256_HASH_A_FÁJLRÓL",
-    "bin": "folio-cli.exe"
-}
-```
-
-### 2. Winget (Windows)
-A Microsoft hivatalos csomagkezelőjébe a `microsoft/winget-pkgs` repóba küldött Pull Requesttel lehet bekerülni. Egy YAML fájlt kell készíteni a projekt metaadataival:
-`manifests/f/FolioTeam/FolioCLI/1.0.0/FolioTeam.FolioCLI.installer.yaml`
-```yaml
-PackageIdentifier: FolioTeam.FolioCLI
-PackageVersion: 1.0.0
-InstallerType: portable
-Installers:
-  - Architecture: x64
-    InstallerUrl: https://github.com/te-neved/folio-cli/releases/download/v1.0.0/folio-cli.exe
-    InstallerSha256: IDE_JÖN_A_SHA256_HASH
-```
-
-### 3. AUR (Arch Linux)
-Az Arch User Repository-ban egy `PKGBUILD` fájlt kell létrehozni. Két opció van:
-- `folio-cli-bin`: Direktbe a GitHubról tölti le a bináris futtatható állományt.
-- `folio-cli`: A felhasználó gépén a `dart` segítségével fordul le a forráskódból.
-
-Példa `PKGBUILD` a `-bin` verzióhoz:
-```bash
-pkgname=folio-cli-bin
-pkgver=1.0.0
-pkgrel=1
-pkgdesc="Folio CLI for Kréta e-napló"
-arch=('x86_64')
-url="https://github.com/te-neved/folio-cli"
-license=('MIT')
-provides=('folio-cli')
-conflicts=('folio-cli')
-source=("${url}/releases/download/v${pkgver}/folio-cli-linux")
-sha256sums=('IDE_JÖN_A_SHA256_HASH')
-
-package() {
-    install -Dm755 "${srcdir}/folio-cli-linux" "${pkgdir}/usr/bin/folio-cli"
-}
-```
-
-### 4. APT (Debian/Ubuntu)
-Ehhez egy hagyományos Debian `.deb` csomagot kell készíteni `dpkg-deb` segítségével.
-1. Hozd létre a struktúrát: `folio-cli_1.0.0_amd64/usr/bin/`
-2. Másold be a lefordított binárist a `usr/bin/` mappába.
-3. Hozd létre a `folio-cli_1.0.0_amd64/DEBIAN/control` fájlt a csomag adataival.
-4. Futtasd: `dpkg-deb --build folio-cli_1.0.0_amd64`
-Az így elkészült `.deb` fájlt felteheted a GitHub Releases-hez.
+A generált futtatható állományt a `bin/folio_cli.exe` alatt találod. Windows esetén ez automatikusan elrejti a CMD ablakot a Démön (Task Scheduler) bekapcsolásánál, mivel a flag-ekben `-WindowStyle Hidden` parancsot hívunk meg.

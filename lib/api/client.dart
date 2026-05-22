@@ -25,7 +25,14 @@ class KretaClient {
           final code = match.group(1)?.trim();
           final textHtml = match.group(2) ?? '';
           // HTML tagek eltávolítása a megjelenített szövegből (pl. <br/>, <small>)
-          final text = textHtml.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+          var text = textHtml.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+          // HTML entitások dekódolása (pl. &#x171;, &#xE1;)
+          text = text.replaceAllMapped(RegExp(r'&#x([0-9a-fA-F]+);'), (m) {
+            return String.fromCharCode(int.parse(m.group(1)!, radix: 16));
+          }).replaceAllMapped(RegExp(r'&#([0-9]+);'), (m) {
+            return String.fromCharCode(int.parse(m.group(1)!));
+          });
+
           if (code != null && code.isNotEmpty && text.isNotEmpty) {
             results[code] = text;
           }
@@ -106,7 +113,10 @@ class KretaClient {
       if (btnMatch != null) {
         redirectUrl1 = btnMatch.group(1)!.replaceAll('&amp;', '&');
       } else {
-        print('Hibás adatok, vagy a Kréta idp elutasított.');
+        try {
+          await File('res2_debug.html').writeAsString(html);
+        } catch (_) {}
+        print('Hibás adatok, vagy a Kréta idp elutasított. Kimentve a res2_debug.html fájlba.');
         return false;
       }
     } else {
@@ -208,7 +218,32 @@ class KretaClient {
     }
   }
 
-  Future<dynamic> _getAPI(String url) async {
+  File _getCacheFile() {
+    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
+    return File('$home/.folio_cache.json');
+  }
+
+  Map<String, dynamic> _loadCache() {
+    final file = _getCacheFile();
+    if (file.existsSync()) {
+      try {
+        return jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      } catch (e) {
+        return {};
+      }
+    }
+    return {};
+  }
+
+  void _saveToCache(String url, dynamic data) {
+    final cache = _loadCache();
+    cache[url] = data;
+    try {
+      _getCacheFile().writeAsStringSync(jsonEncode(cache));
+    } catch (_) {}
+  }
+
+  Future<dynamic> _getAPI(String url, {bool silent = false}) async {
     if (accessToken == null) {
       throw Exception('Nincs bejelentkezve (hiányzó accessToken).');
     }
@@ -222,20 +257,31 @@ class KretaClient {
     try {
       final response = await http.get(Uri.parse(url), headers: headers);
       if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+        final data = jsonDecode(response.body);
+        _saveToCache(url, data);
+        return data;
       } else {
-        print('Hiba az API lekérdezés során ($url): ${response.statusCode} - ${response.body}');
+        if (!silent) {
+          print('Hiba az API lekérdezés során ($url): ${response.statusCode} - ${response.body}');
+        }
         return null;
       }
     } catch (e) {
-      print('Kivétel az API lekérdezés során: $e');
+      if (!silent) {
+        print('\n[\x1B[33mOFFLINE MÓD\x1B[0m] Hálózat vagy szerver hiba, próbálkozás a gyorsítótárból...');
+      }
+      final cache = _loadCache();
+      if (cache.containsKey(url)) {
+        return cache[url];
+      }
+      print('Sajnos nincs elmentett adat ehhez a lekérdezéshez.');
       return null;
     }
   }
 
-  Future<Map<String, dynamic>?> getStudentData() async {
+  Future<Map<String, dynamic>?> getStudentData({bool silent = false}) async {
     final url = KretaAPI.student(instituteCode);
-    final data = await _getAPI(url);
+    final data = await _getAPI(url, silent: silent);
     if (data is Map<String, dynamic>) {
       return data;
     }
@@ -249,5 +295,129 @@ class KretaClient {
       return data;
     }
     return null;
+  }
+
+  Future<List<dynamic>?> getTimetable(DateTime start, DateTime end) async {
+    final url = KretaAPI.timetable(instituteCode, start: start, end: end);
+    final data = await _getAPI(url);
+    if (data is List) {
+      return data;
+    }
+    return null;
+  }
+
+  Future<List<dynamic>?> getAbsences() async {
+    final url = KretaAPI.absences(instituteCode);
+    final data = await _getAPI(url);
+    if (data is List) {
+      return data;
+    }
+    return null;
+  }
+
+  Future<List<dynamic>?> getAverages() async {
+    final url = KretaAPI.averages(instituteCode);
+    final data = await _getAPI(url, silent: true);
+    if (data is List) {
+      return data;
+    }
+
+    // Fallback: Ha az API 500-as hibát dob, kiszámítjuk az átlagokat a jegyekből!
+    final grades = await getGrades();
+    if (grades != null) {
+      final Map<String, List<Map<String, dynamic>>> subjectGrades = {};
+      for (var grade in grades) {
+        final tipus = grade['Tipus']?['Nev']?.toString().toLowerCase() ?? '';
+        // Kizárjuk a félévi, év végi és egyéb összefoglaló jegyeket
+        if (tipus.contains('vegi') || tipus.contains('felevevi') || tipus.contains('negyedevi')) {
+          continue;
+        }
+        
+        final subject = grade['Tantargy']?['Nev'];
+        if (subject == null) continue;
+        
+        final numVal = grade['SzamErtek'];
+        if (numVal == null || numVal == 0 || numVal > 5) continue;
+        
+        final weight = grade['SulySzazalekErteke'] ?? 100;
+        
+        subjectGrades.putIfAbsent(subject, () => []);
+        subjectGrades[subject]!.add({
+          'value': numVal is int ? numVal.toDouble() : double.parse(numVal.toString()),
+          'weight': weight is int ? weight.toDouble() : double.parse(weight.toString())
+        });
+      }
+      
+      final List<dynamic> calculatedAverages = [];
+      subjectGrades.forEach((subject, items) {
+        double sum = 0;
+        double weightSum = 0;
+        for (var item in items) {
+          sum += item['value'] * item['weight'];
+          weightSum += item['weight'];
+        }
+        if (weightSum > 0) {
+          calculatedAverages.add({
+            'Tantargy': {'Nev': subject},
+            'Ertek': (sum / weightSum).toStringAsFixed(2).replaceAll('.', ',')
+          });
+        }
+      });
+      return calculatedAverages;
+    }
+
+    return null;
+  }
+
+  Future<List<dynamic>?> getExams() async {
+    final url = KretaAPI.exams(instituteCode);
+    final data = await _getAPI(url);
+    if (data is List) {
+      return data;
+    }
+    return null;
+  }
+
+  Future<List<dynamic>?> getHomework({DateTime? start, String? id}) async {
+    start ??= DateTime.now().subtract(Duration(days: 30));
+    final url = KretaAPI.homework(instituteCode, start: start, id: id);
+    final data = await _getAPI(url);
+    if (data is List) {
+      return data;
+    }
+    return null;
+  }
+
+  Future<List<dynamic>?> getMessages() async {
+    final url = KretaAPI.messages();
+    final data = await _getAPI(url);
+    if (data is List) {
+      return data;
+    }
+    return null;
+  }
+
+  Future<bool> refreshAccessToken() async {
+    if (refreshToken == null) return false;
+    
+    final tokenUrl = Uri.parse(KretaAPI.login);
+    try {
+      final tokenRes = await http.post(tokenUrl, headers: {
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'user-agent': 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0',
+      }, body: {
+        "client_id": KretaAPI.clientId,
+        "grant_type": "refresh_token",
+        "refresh_token": refreshToken!,
+      });
+      
+      if (tokenRes.statusCode == 200) {
+        final data = jsonDecode(tokenRes.body);
+        accessToken = data['access_token'];
+        refreshToken = data['refresh_token'] ?? refreshToken;
+        return true;
+      }
+    } catch (_) {}
+    return false;
   }
 }

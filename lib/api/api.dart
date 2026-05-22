@@ -22,8 +22,8 @@ class KretaAPI {
       BaseKreta.kreta(iss) + KretaApiEndpoints.groups;
   static String groupAverages(String iss, String uid) =>
       "${BaseKreta.kreta(iss)}${KretaApiEndpoints.groupAverages}?oktatasiNevelesiFeladatUid=$uid";
-  static String averages(String iss, String uid) =>
-      "${BaseKreta.kreta(iss)}${KretaApiEndpoints.averages}?oktatasiNevelesiFeladatUid=$uid";
+  static String averages(String iss) =>
+      "${BaseKreta.kreta(iss)}${KretaApiEndpoints.averages}";
   static String timetable(String iss, {DateTime? start, DateTime? end}) =>
       BaseKreta.kreta(iss) +
       KretaApiEndpoints.timetable +
@@ -41,6 +41,8 @@ class KretaAPI {
           : "");
   static String capabilities(String iss) =>
       BaseKreta.kreta(iss) + KretaApiEndpoints.capabilities;
+  static String messages() =>
+      BaseKreta.kretaAdmin + KretaApiEndpoints.messages;
 }
 
 class BaseKreta {
@@ -69,4 +71,5 @@ class KretaApiEndpoints {
   static const exams = "/ellenorzo/V3/Sajat/BejelentettSzamonkeresek";
   static const homework = "/ellenorzo/V3/Sajat/HaziFeladatok";
   static const capabilities = "/ellenorzo/V3/Sajat/Intezmenyek";
+  static const messages = "/api/v1/kommunikacio/postaladaelemek/sajat";
 }
