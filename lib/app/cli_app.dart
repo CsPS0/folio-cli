@@ -351,6 +351,14 @@ class FolioCliApp {
     if (remember) {
       await _saveAuth();
       print('Bejelentkezés elmentve.\n');
+      
+      if (Platform.isWindows) {
+        final enableDaemon = Confirm(
+          prompt: 'Szeretnéd bekapcsolni az automatikus háttér-értesítéseket bejelentkezéskor/óránként? (Ezt később a beállításokban is módosíthatod)',
+          defaultValue: false,
+        ).interact();
+        _setupDaemon(enableDaemon);
+      }
     }
 
     await _mainMenu();
@@ -455,6 +463,42 @@ class FolioCliApp {
           print('Viszlát!');
           exit(0);
       }
+    }
+  }
+
+  void _setupDaemon(bool enable) {
+    if (!Platform.isWindows) return;
+    final taskName = "FolioCliDaemon";
+    if (enable) {
+      final exePath = Platform.resolvedExecutable;
+      final scriptPath = Platform.script.toFilePath();
+      
+      String command;
+      if (scriptPath.endsWith('.dart')) {
+        command = '""$exePath"" run ""$scriptPath"" --daemon';
+      } else {
+        command = '""$exePath"" --daemon';
+      }
+      
+      final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
+      final vbsPath = '$home\\.folio_daemon.vbs';
+      final vbsFile = File(vbsPath);
+      
+      vbsFile.writeAsStringSync('Set WshShell = CreateObject("WScript.Shell")\nWshShell.Run "$command", 0\nSet WshShell = Nothing');
+
+      Process.runSync('schtasks', [
+        '/Create', '/F',
+        '/TN', taskName,
+        '/TR', 'wscript.exe "$vbsPath"',
+        '/SC', 'ONLOGON'
+      ]);
+      print('Értesítések BEKAPCSOLVA (Láthatatlan háttérfolyamat indításkor).\n');
+    } else {
+      Process.runSync('schtasks', [
+        '/Delete', '/F',
+        '/TN', taskName
+      ]);
+      print('Értesítések KIKAPCSOLVA.\n');
     }
   }
 
@@ -669,31 +713,7 @@ class FolioCliApp {
           defaultValue: true,
         ).interact();
 
-        final taskName = "FolioCliDaemon";
-        if (enable) {
-          final exePath = Platform.resolvedExecutable;
-          final scriptPath = Platform.script.toFilePath();
-          String command;
-          if (scriptPath.endsWith('.dart')) {
-            command = 'powershell -WindowStyle Hidden -Command "$exePath run $scriptPath --daemon"';
-          } else {
-            command = 'powershell -WindowStyle Hidden -Command "$exePath --daemon"';
-          }
-          
-          Process.runSync('schtasks', [
-            '/Create', '/F',
-            '/TN', taskName,
-            '/TR', command,
-            '/SC', 'HOURLY'
-          ]);
-          print('Értesítések BEKAPCSOLVA (Windows Feladatütemezőn keresztül).\n');
-        } else {
-          Process.runSync('schtasks', [
-            '/Delete', '/F',
-            '/TN', taskName
-          ]);
-          print('Értesítések KIKAPCSOLVA.\n');
-        }
+        _setupDaemon(enable);
       } else if (action == 4) {
         final confirm = Confirm(
           prompt: 'Biztosan törölni szeretnéd a mentett profilokat?',

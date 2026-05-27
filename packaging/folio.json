@@ -1,0 +1,21 @@
+{
+    "version": "1.0.0",
+    "description": "A modern, fast CLI application for the Hungarian Kreta e-diary system.",
+    "homepage": "https://github.com/CsPS0/folio-cli",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/CsPS0/folio-cli/releases/download/v1.0.0/folio_cli.exe",
+            "hash": "PUT_SHA256_HASH_HERE"
+        }
+    },
+    "bin": "folio_cli.exe",
+    "checkver": "github",
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/CsPS0/folio-cli/releases/download/v$version/folio_cli.exe"
+            }
+        }
+    }
+}
