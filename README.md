@@ -16,10 +16,11 @@ A Folio CLI egy parancssoros alkalmazás a Kréta e-napló rendszerhez. Az iOS a
 
 Forráskódból történő futtatás és fordítás:
 ```bash
-git clone https://github.com/te-felhasznaloneved/folio-cli.git
+git clone https://github.com/CsPS0/folio-cli.git
 cd folio-cli
 dart pub get
 dart compile exe bin/folio_cli.dart
+dart run
 ```
 
 ## Használat
