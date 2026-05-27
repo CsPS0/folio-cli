@@ -43,3 +43,5 @@ debug.py
 *.html
 test_*.dart
 scratch/
+
+docs/PUBLISHING_GUIDE.md
