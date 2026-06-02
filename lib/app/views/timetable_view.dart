@@ -3,6 +3,8 @@ part of '../cli_app.dart';
 extension FolioCliAppTimetableView on FolioCliApp {
   Future<void> _showTimetable() async {
       while (true) {
+        if (!await _ensureClientReady()) return;
+        
         final action = Select(
           prompt: 'Órarend',
           options: ['Ezen a héten', 'Következő héten', 'Vissza'],
@@ -28,25 +30,26 @@ extension FolioCliAppTimetableView on FolioCliApp {
   
             Map<int, Map<int, List<Map<String, dynamic>>>> matrix = {};
   
-            for (var lesson in timetable) {
-              final dateStr = lesson['Datum']?.toString().split('T').first ?? '';
-              final dateObj = DateTime.tryParse(dateStr);
-              if (dateObj == null) continue;
-  
-              final weekday = dateObj.weekday;
+            for (var entry in timetable) {
+              final date = entry.date;
+              if (date == null) continue;
+
+              final weekday = date.weekday;
               if (weekday > maxWeekday) maxWeekday = weekday;
               if (weekday > 7) continue;
-  
-              final ora = _parseLessonNumber(lesson['Oraszam']);
-              if (ora == 99) continue;
-  
+
+              final ora = entry.lessonNumber;
+              if (ora > 20) continue;
+
               if (ora < minOra) minOra = ora;
               if (ora > maxOra) maxOra = ora;
-  
+
               matrix.putIfAbsent(ora, () => {});
               matrix[ora]!.putIfAbsent(weekday, () => []);
-              // Cast the dynamic map to Map<String, dynamic>
-              matrix[ora]![weekday]!.add(Map<String, dynamic>.from(lesson));
+              matrix[ora]![weekday]!.add({
+                'subject': entry.subject,
+                'theme': entry.theme ?? '',
+              });
             }
   
             if (minOra > maxOra) {
@@ -85,8 +88,8 @@ extension FolioCliAppTimetableView on FolioCliApp {
                 final lessons = matrix[ora]?[w] ?? [];
                 if (lessons.isNotEmpty) {
                   final lesson = lessons.first;
-                  String sub = lesson['Tantargy']?['Nev'] ?? '';
-                  String thm = lesson['Tema'] ?? '';
+                  String sub = lesson['subject'] as String;
+                  String thm = lesson['theme'] as String;
                   
                   List<String> cellLines = [];
                   if (sub.isNotEmpty) {
@@ -142,6 +145,8 @@ extension FolioCliAppTimetableView on FolioCliApp {
     }
 
   Future<void> _exportCalendar() async {
+      if (!await _ensureClientReady()) return;
+      
       print('\n--- Naptár Exportálása ---');
       print('Adatok lekérése (E heti és jövő heti órarend, valamint vizsgák)...');
       
@@ -159,10 +164,12 @@ extension FolioCliAppTimetableView on FolioCliApp {
       final icsContent = IcsExporter.generate(timetable, exams);
       
       final home = Platform.environment['USERPROFILE'] ?? Platform.environment['HOME'] ?? '.';
-      final desktop = Directory('$home\\Desktop');
+      final desktopPath = Platform.isWindows ? '$home\\Desktop' : '$home/Desktop';
+      final desktop = Directory(desktopPath);
       final outDir = desktop.existsSync() ? desktop.path : home;
       
-      final file = File('$outDir\\folio_naptar.ics');
+      final sep = Platform.isWindows ? '\\' : '/';
+      final file = File('$outDir${sep}folio_naptar.ics');
       await file.writeAsString(icsContent);
       
       print('Sikeres exportálás! A naptár elmentve ide: ${file.path}\n');

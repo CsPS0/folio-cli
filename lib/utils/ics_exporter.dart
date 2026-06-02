@@ -1,7 +1,7 @@
-import 'dart:io';
+import '../models/models.dart';
 
 class IcsExporter {
-  static String generate(List<dynamic> timetable, List<dynamic> exams) {
+  static String generate(List<TimetableEntry> timetable, List<Exam> exams) {
     final buffer = StringBuffer();
     buffer.writeln('BEGIN:VCALENDAR');
     buffer.writeln('VERSION:2.0');
@@ -14,17 +14,13 @@ class IcsExporter {
     final dtstamp = _formatDate(now);
 
     for (var lesson in timetable) {
-      final startStr = lesson['KezdetIdopont'];
-      final endStr = lesson['VegIdopont'];
-      if (startStr == null || endStr == null) continue;
-
-      final start = DateTime.tryParse(startStr)?.toUtc();
-      final end = DateTime.tryParse(endStr)?.toUtc();
+      final start = lesson.startTime?.toUtc();
+      final end = lesson.endTime?.toUtc();
       if (start == null || end == null) continue;
 
-      final subject = lesson['Tantargy']?['Nev'] ?? 'Tanóra';
-      final theme = lesson['Tema'] ?? '';
-      final uid = 'lesson-${lesson['Uid'] ?? start.millisecondsSinceEpoch}@folio';
+      final subject = lesson.subject;
+      final theme = lesson.theme ?? '';
+      final uid = 'lesson-${lesson.uid ?? start.millisecondsSinceEpoch}@folio';
 
       buffer.writeln('BEGIN:VEVENT');
       buffer.writeln('UID:$uid');
@@ -37,15 +33,13 @@ class IcsExporter {
     }
 
     for (var exam in exams) {
-      final dateStr = exam['Datum'];
-      if (dateStr == null) continue;
-      final date = DateTime.tryParse(dateStr)?.toUtc();
+      final date = exam.date?.toUtc();
       if (date == null) continue;
 
-      final subject = exam['Tantargy']?['Nev'] ?? 'Vizsga';
-      final type = exam['Modja']?['Nev'] ?? 'Számonkérés';
-      final theme = exam['Tema'] ?? '';
-      final uid = 'exam-${exam['Uid'] ?? date.millisecondsSinceEpoch}@folio';
+      final subject = exam.subject;
+      final type = exam.mode;
+      final theme = exam.theme ?? '';
+      final uid = 'exam-${exam.uid ?? date.millisecondsSinceEpoch}@folio';
 
       buffer.writeln('BEGIN:VEVENT');
       buffer.writeln('UID:$uid');

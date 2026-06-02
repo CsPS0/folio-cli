@@ -2,40 +2,48 @@ part of '../cli_app.dart';
 
 extension FolioCliAppDaemonLogic on FolioCliApp {
   Future<void> _checkNewItems() async {
-      final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
-      final stateFile = File('$home/.folio_state.json');
-      Map<String, dynamic> state = {};
-      if (stateFile.existsSync()) {
-        try {
-          state = jsonDecode(stateFile.readAsStringSync());
-        } catch (_) {}
-      }
-  
-      final oldGradesCount = state['gradesCount'] ?? 0;
+      final state = AppState.instance;
+      final oldGradesCount = int.tryParse(state.getAuthData()['gradesCount']?.toString() ?? '0') ?? 0;
       
       final grades = await _client!.getGrades();
       if (grades != null) {
         if (grades.length > oldGradesCount && oldGradesCount > 0) {
           final newGradesCount = grades.length - oldGradesCount;
-          _showWindowsToast('Folio (Kréta)', 'Kaptál $newGradesCount új jegyet!');
+          await _showWindowsToast('Folio (Kréta)', 'Kaptál $newGradesCount új jegyet!');
         }
-        state['gradesCount'] = grades.length;
+        final currentData = state.getAuthData();
+        currentData['gradesCount'] = grades.length;
+        state.saveAuthData(currentData);
       }
   
-      final oldHwCount = state['homeworkCount'] ?? 0;
+      final oldHwCount = int.tryParse(state.getAuthData()['homeworkCount']?.toString() ?? '0') ?? 0;
       final homeworks = await _client!.getHomework(start: DateTime.now().subtract(Duration(days: 7)));
       if (homeworks != null) {
         if (homeworks.length > oldHwCount && oldHwCount > 0) {
           final newHwCount = homeworks.length - oldHwCount;
-          _showWindowsToast('Folio (Kréta)', 'Kaptál $newHwCount új házi feladatot!');
+          await _showWindowsToast('Folio (Kréta)', 'Kaptál $newHwCount új házi feladatot!');
         }
-        state['homeworkCount'] = homeworks.length;
+        final currentData = state.getAuthData();
+        currentData['homeworkCount'] = homeworks.length;
+        state.saveAuthData(currentData);
       }
-  
-      stateFile.writeAsStringSync(jsonEncode(state));
+
+      final exams = await _client!.getExams();
+      if (exams != null) {
+        final tomorrow = DateTime.now().add(Duration(days: 1));
+        final tomorrowStr = '${tomorrow.year}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
+        
+        for (var exam in exams) {
+          final examDateStr = exam.date?.toString().split(' ').first;
+          if (examDateStr == tomorrowStr) {
+            await _showWindowsToast('Folio (Kréta)', 'Holnap dolgozat: ${exam.subject} (${exam.mode})');
+            break;
+          }
+        }
+      }
     }
 
-  void _showWindowsToast(String title, String message) {
+  Future<void> _showWindowsToast(String title, String message) async {
       if (!Platform.isWindows) return;
       
       final safeTitle = title.replaceAll("'", "''");
@@ -52,7 +60,6 @@ extension FolioCliAppDaemonLogic on FolioCliApp {
   \$notifier.Show(\$toast)
   ''';
       
-      Process.run('powershell', ['-Command', script]);
+      await Process.run('powershell', ['-Command', script]);
     }
-
 }

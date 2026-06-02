@@ -25,7 +25,7 @@ extension FolioCliAppLoginFlow on FolioCliApp {
               
               final choice = Select(
                 prompt: 'Válaszd ki a megfelelőt',
-                options: ['Tanulói adatlap', 'Legutóbbi jegyek', 'Órarend (Ezen a héten)', 'Mulasztások', 'Tantárgyi átlagok', 'Számonkérések', 'Házi feladatok', 'Üzenetek', 'Keresés', 'Naptár exportálása (.ics)', 'Adatok exportálása (CSV)', 'Beállítások', 'Kilépés'],
+                options: options,
               ).interact();
               
               if (choice < keys.length) {

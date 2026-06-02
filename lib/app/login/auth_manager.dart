@@ -7,7 +7,7 @@ extension FolioCliAppAuthManager on FolioCliApp {
       String profileName = 'Ismeretlen Profil';
       final studentData = await _client!.getStudentData();
       if (studentData != null) {
-        profileName = studentData['Nev'] ?? 'Ismeretlen Profil';
+        profileName = studentData.name;
       }
   
       final authFile = _getAuthFile();

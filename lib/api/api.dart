@@ -1,14 +1,63 @@
 import 'package:intl/intl.dart';
 
 class KretaAPI {
-  // IDP API
-    static const login = BaseKreta.kretaIdp + KretaApiEndpoints.token;
-    static const logout = BaseKreta.kretaIdp + KretaApiEndpoints.revoke;
-    static const nonce = BaseKreta.kretaIdp + KretaApiEndpoints.nonce;
-    static const clientId = "kreta-ellenorzo-student-mobile-ios";
+  static const login = BaseKreta.kretaIdp + KretaApiEndpoints.token;
+  static const logout = BaseKreta.kretaIdp + KretaApiEndpoints.revoke;
+  static const nonce = BaseKreta.kretaIdp + KretaApiEndpoints.nonce;
 
-  // ELLENORZO API
-    static String notes(String iss) =>
+  static const clientId = 'kreta-ellenorzo-student-mobile-ios';
+  static const codeVerifier = 'DSpuqj_HhDX4wzQIbtn8lr8NLE5wEi1iVLMtMK0jY6c';
+  static const codeChallenge = 'HByZRRnPGb-Ko_wTI7ibIba1HQ6lor0ws4bcgReuYSQ';
+  static const redirectUri = 'https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect';
+  static const apiKey = '21ff6c25-d1da-4a68-a811-c881a6057463';
+  static const userAgent = 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0';
+  static const oauthNonce = 'wylCrqT4oN6PPgQn2yQB0euKei9nJeZ6_ffJ-VpSKZU';
+  static const oauthScope = 'openid email offline_access kreta-ellenorzo-webapi.public kreta-eugyintezes-webapi.public kreta-fileservice-webapi.public kreta-mobile-global-webapi.public kreta-dkt-webapi.public kreta-ier-webapi.public';
+
+  static String authorizeUrl({String? instituteCode}) {
+    final scopeEncoded = Uri.encodeComponent(oauthScope);
+    final base = '${BaseKreta.kretaIdp}/connect/authorize'
+        '?prompt=login'
+        '&nonce=$oauthNonce'
+        '&response_type=code'
+        '&code_challenge_method=S256'
+        '&scope=$scopeEncoded'
+        '&code_challenge=$codeChallenge'
+        '&redirect_uri=${Uri.encodeComponent(redirectUri)}'
+        '&client_id=$clientId'
+        '&state=folio_student_mobile';
+    if (instituteCode != null) {
+      return '$base&acr_values=institute_code:$instituteCode';
+    }
+    return base;
+  }
+
+  static Map<String, String> tokenRequestBody(String code) => {
+        'code': code,
+        'code_verifier': codeVerifier,
+        'redirect_uri': redirectUri,
+        'client_id': clientId,
+        'grant_type': 'authorization_code',
+      };
+
+  static Map<String, String> refreshRequestBody(String refreshToken) => {
+        'client_id': clientId,
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+      };
+
+  static Map<String, String> get tokenHeaders => {
+        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+        'user-agent': userAgent,
+      };
+
+  static Map<String, String> apiHeaders(String accessToken) => {
+        'authorization': 'Bearer $accessToken',
+        'apiKey': apiKey,
+        'user-agent': userAgent,
+      };
+
+  static String notes(String iss) =>
         BaseKreta.kreta(iss) + KretaApiEndpoints.notes;
     static String events(String iss) =>
         BaseKreta.kreta(iss) + KretaApiEndpoints.events;

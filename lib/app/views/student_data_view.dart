@@ -3,6 +3,8 @@ part of '../cli_app.dart';
 extension FolioCliAppStudentView on FolioCliApp {
   Future<void> _showStudentData() async {
       while (true) {
+        if (!await _ensureClientReady()) return;
+
         final action = Select(
           prompt: 'Tanulói adatlap',
           options: ['Adatok megtekintése', 'Vissza'],
@@ -13,11 +15,11 @@ extension FolioCliAppStudentView on FolioCliApp {
         print('\n--- Tanulói adatlap lekérdezése ---');
         final data = await _client!.getStudentData();
         if (data != null) {
-          final name = data['Nev'] ?? 'Ismeretlen';
-          final institution = data['IntezmenyNev'] ?? 'Ismeretlen intézmény';
+          final name = data.name;
+          final institution = data.institutionName;
           print('Név: $name');
           print('Intézmény: $institution');
-          studentUid = data['Uid']?.toString();
+          studentUid = data.uid;
         } else {
           print('Nem sikerült lekérdezni az adatokat.');
         }
@@ -26,6 +28,8 @@ extension FolioCliAppStudentView on FolioCliApp {
     }
 
   Future<void> _showTargetAverageCalculator() async {
+      if (!await _ensureClientReady()) return;
+      
       _clearScreen();
       print('\n--- Célátlag Kalkulátor ---');
       final grades = await _client!.getGrades();
@@ -37,19 +41,17 @@ extension FolioCliAppStudentView on FolioCliApp {
   
       final Map<String, List<Map<String, double>>> subjectGrades = {};
       for (var grade in grades) {
-        final tipus = grade['Tipus']?['Nev']?.toString().toLowerCase() ?? '';
-        if (tipus.contains('vegi') || tipus.contains('felevevi') || tipus.contains('negyedevi')) continue;
+        if (grade.isSummaryGrade) continue;
         
-        final subject = grade['Tantargy']?['Nev'];
-        if (subject == null) continue;
+        final subject = grade.subject;
         
-        final numVal = grade['SzamErtek'];
+        final numVal = grade.numericValue;
         if (numVal == null || numVal == 0 || numVal > 5) continue;
         
-        final weight = (grade['SulySzazalekErteke'] ?? 100).toDouble();
+        final weight = grade.weight;
         
         subjectGrades.putIfAbsent(subject, () => []);
-        subjectGrades[subject]!.add({'value': numVal is int ? numVal.toDouble() : double.parse(numVal.toString()), 'weight': weight});
+        subjectGrades[subject]!.add({'value': numVal.toDouble(), 'weight': weight});
       }
   
       if (subjectGrades.isEmpty) {

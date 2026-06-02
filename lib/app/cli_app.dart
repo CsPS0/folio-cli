@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:interact/interact.dart';
 import 'package:folio_cli/api/client.dart';
 import 'package:folio_cli/utils/chart_generator.dart';
 import 'package:folio_cli/utils/ics_exporter.dart';
-import 'package:interact/interact.dart';
+import 'state/app_state.dart';
 
 part 'login/auth_manager.dart';
 part 'login/login_flow.dart';
@@ -60,10 +62,17 @@ class FolioCliApp {
         successSuffix: '\x1B[38;2;241;253;251m\u00B7 \x1B[0m',
         activeItemPrefix: '\x1B[38;2;68;210;168m\u276F \x1B[0m',
       );
+      print('');
     }
   }
-
-
+  
+  Future<bool> _ensureClientReady() async {
+    if (_client == null) {
+      print('Hiba: Kliens nincs inicializálva. Próbálj újra bejelentkezni!');
+      return false;
+    }
+    return true;
+  }
 
   void _clearScreen() {
     stdout.write('\x1B[0m$_currentBgAnsi$_currentFgAnsi\x1B[2J\x1B[3J\x1B[H');
@@ -73,8 +82,7 @@ class FolioCliApp {
   String? studentUid;
 
   File _getAuthFile() {
-    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
-    return File('$home/.folio_auth.json');
+    return AppState.instance.authFile;
   }
 
   Future<bool> _tryAutoLogin() async {
@@ -123,7 +131,7 @@ class FolioCliApp {
           }
 
           if (studentData != null) {
-            studentUid = studentData['Uid']?.toString();
+            studentUid = studentData.uid;
             return true;
           }
         }
@@ -142,14 +150,26 @@ class FolioCliApp {
     await _checkNewItems();
   }
 
+  void _showBanner() {
+    print('\x1B[36m');
+    print(r'''
+    _____     _ _       
+   |  ___|__ | (_) ___  
+   | |_ / _ \| | |/ _ \ 
+   |  _| (_) | | | (_) |
+   |_|  \___/|_|_|\___/ CLI v1.0.0
+    ''');
+    print('\x1B[0m');
+  }
+
   Future<void> runInteractive() async {
-    print('==============================');
-    print('    Folio CLI (Kréta API)     ');
-    print('==============================\n');
+    AppState.instance.migrateOldFiles();
+    _showBanner();
 
     print('Keresem a mentett bejelentkezést...');
     if (await _tryAutoLogin()) {
       print('Sikeres automatikus bejelentkezés!\n');
+      await _checkForUpdates();
       await _mainMenu();
       return;
     }
@@ -161,6 +181,29 @@ class FolioCliApp {
     print('=============================================================\x1B[0m\n');
 
     await _performLoginFlow();
+    await _checkForUpdates();
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      // NOTE: Replace YOUR_USERNAME with the actual GitHub username where the repo is hosted
+      final res = await http.get(
+        Uri.parse('https://api.github.com/repos/YOUR_USERNAME/folio-cli/releases/latest'),
+      ).timeout(Duration(seconds: 2));
+      
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        final latestVersion = data['tag_name'] as String?;
+        // Assuming current version is v1.0.0
+        if (latestVersion != null && latestVersion != 'v1.0.0' && latestVersion.startsWith('v')) {
+          print('\x1B[33m\n[!] Új verzió elérhető: $latestVersion (Jelenlegi: v1.0.0)');
+          print('[!] Ha Scoop-on keresztül telepítetted, futtasd a következő parancsot:');
+          print('    scoop update folio-cli\x1B[0m\n');
+        }
+      }
+    } catch (_) {
+      // Ignore network errors so it doesn't interrupt the app
+    }
   }
 
   Future<void> runWithCredentials(String instituteCode, String username, String password) async {
@@ -172,30 +215,57 @@ class FolioCliApp {
       exit(1);
     }
     print('Sikeres bejelentkezés!\n');
+    await _checkForUpdates();
     await _mainMenu();
   }
 
   Future<void> _mainMenu() async {
     _clearScreen();
     while (true) {
-      final action = Select(
+      final stateFile = AppState.instance.stateFile;
+      List<dynamic> hiddenItems = [];
+      if (stateFile.existsSync()) {
+        try {
+          final state = jsonDecode(stateFile.readAsStringSync());
+          if (state['hiddenMenuItems'] != null) {
+            hiddenItems = state['hiddenMenuItems'];
+          }
+        } catch (_) {}
+      }
+
+      final allOptions = [
+        'Tanulói adatlap',
+        'Legutóbbi jegyek',
+        'Órarend (Ezen a héten)',
+        'Mulasztások',
+        'Tantárgyi átlagok',
+        'Számonkérések',
+        'Házi feladatok',
+        'Üzenetek',
+        'Keresés'
+      ];
+
+      List<String> displayOptions = [];
+      List<int> actionIds = [];
+
+      for (int i = 0; i < allOptions.length; i++) {
+        if (!hiddenItems.contains(i)) {
+          displayOptions.add(allOptions[i]);
+          actionIds.add(i);
+        }
+      }
+
+      displayOptions.add('Beállítások');
+      actionIds.add(9);
+      displayOptions.add('Kilépés');
+      actionIds.add(10);
+
+      final selection = Select(
         prompt: 'Folio',
-        options: [
-          'Tanulói adatlap',
-          'Legutóbbi jegyek',
-          'Órarend (Ezen a héten)',
-          'Mulasztások',
-          'Tantárgyi átlagok',
-          'Számonkérések',
-          'Házi feladatok',
-          'Üzenetek',
-          'Keresés',
-          'Naptár exportálása (.ics)',
-          'Adatok exportálása (CSV)',
-          'Beállítások',
-          'Kilépés'
-        ],
+        options: displayOptions,
       ).interact();
+
+      final action = actionIds[selection];
 
       switch (action) {
         case 0:
@@ -245,44 +315,14 @@ class FolioCliApp {
           break;
         case 9:
           _clearScreen();
-          await _exportCalendar();
-          _clearScreen();
-          break;
-        case 10:
-          _clearScreen();
-          await _exportToCsv();
-          _clearScreen();
-          break;
-        case 11:
-          _clearScreen();
           await _showSettings();
           _clearScreen();
           break;
-        case 12:
+        case 10:
           print('Viszlát!');
           exit(0);
       }
     }
-  }
-
-  String _getDayName(int weekday) {
-    switch (weekday) {
-      case 1: return 'Hétfő';
-      case 2: return 'Kedd';
-      case 3: return 'Szerda';
-      case 4: return 'Csütörtök';
-      case 5: return 'Péntek';
-      case 6: return 'Szombat';
-      case 7: return 'Vasárnap';
-      default: return '';
-    }
-  }
-
-  int _parseLessonNumber(dynamic oraszam) {
-    if (oraszam == null) return 99;
-    final numStr = oraszam.toString().replaceAll(RegExp(r'[^0-9]'), '');
-    if (numStr.isEmpty) return 99;
-    return int.parse(numStr);
   }
 
   List<String> _wrapText(String text, int width) {

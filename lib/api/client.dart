@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'api.dart';
+import '../models/models.dart';
+import '../app/state/app_state.dart';
 
 class KretaClient {
   String? accessToken;
@@ -48,7 +50,7 @@ class KretaClient {
   Future<bool> login(String username, String password) async {
     print('Bejelentkezés szimulálása az idp.e-kreta.hu oldalon...');
     
-    final authorizeUrl = "https://idp.e-kreta.hu/connect/authorize?prompt=login&nonce=wylCrqT4oN6PPgQn2yQB0euKei9nJeZ6_ffJ-VpSKZU&response_type=code&code_challenge_method=S256&scope=openid%20email%20offline_access%20kreta-ellenorzo-webapi.public%20kreta-eugyintezes-webapi.public%20kreta-fileservice-webapi.public%20kreta-mobile-global-webapi.public%20kreta-dkt-webapi.public%20kreta-ier-webapi.public&code_challenge=HByZRRnPGb-Ko_wTI7ibIba1HQ6lor0ws4bcgReuYSQ&redirect_uri=https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect&client_id=kreta-ellenorzo-student-mobile-ios&state=folio_student_mobile";
+    final authorizeUrl = KretaAPI.authorizeUrl(instituteCode: instituteCode);
     
     var client = http.Client();
     http.Response res1 = await client.get(Uri.parse(authorizeUrl));
@@ -89,7 +91,7 @@ class KretaClient {
     request.followRedirects = false;
     request.headers['cookie'] = getCookieString();
     request.headers['content-type'] = 'application/x-www-form-urlencoded';
-    request.headers['user-agent'] = 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0';
+    request.headers['user-agent'] = KretaAPI.userAgent;
     request.bodyFields = {
       'UserName': username,
       'Password': password,
@@ -113,10 +115,8 @@ class KretaClient {
       if (btnMatch != null) {
         redirectUrl1 = btnMatch.group(1)!.replaceAll('&amp;', '&');
       } else {
-        try {
-          await File('res2_debug.html').writeAsString(html);
-        } catch (_) {}
-        print('Hibás adatok, vagy a Kréta idp elutasított. Kimentve a res2_debug.html fájlba.');
+        print('Hibás adatok, vagy a Kréta idp elutasított.');
+        client.close();
         return false;
       }
     } else {
@@ -127,7 +127,7 @@ class KretaClient {
     var req3 = http.Request('GET', Uri.parse(redirectUrl1.startsWith('http') ? redirectUrl1 : 'https://idp.e-kreta.hu$redirectUrl1'));
     req3.followRedirects = false;
     req3.headers['cookie'] = getCookieString();
-    req3.headers['user-agent'] = 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0';
+    req3.headers['user-agent'] = KretaAPI.userAgent;
     
     var res3 = await client.send(req3);
     
@@ -146,10 +146,8 @@ class KretaClient {
         } else if (inputMatch != null) {
           finalRedirect = "https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect?code=${inputMatch.group(1)}";
         } else {
-          try {
-            await File('res3_debug.html').writeAsString(html);
-          } catch (_) {}
           print('Nem kaptunk kódot a bejelentkezés végén (statusCode: ${res3.statusCode}).');
+          client.close();
           return false;
         }
       }
@@ -157,23 +155,24 @@ class KretaClient {
     
     if (!finalRedirect.contains('code=')) {
       print('Nem kaptunk kódot a bejelentkezés végén.');
+      client.close();
       return false;
     }
     
     final code = Uri.parse(finalRedirect.replaceAll('#', '?')).queryParameters['code'];
-    if (code == null) return false;
+    if (code == null) {
+      client.close();
+      return false;
+    }
     
     final tokenUrl = Uri.parse(KretaAPI.login);
-    final tokenRes = await client.post(tokenUrl, headers: {
-      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'user-agent': 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0',
-    }, body: {
-      "code": code,
-      "code_verifier": "DSpuqj_HhDX4wzQIbtn8lr8NLE5wEi1iVLMtMK0jY6c",
-      "redirect_uri": "https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect",
-      "client_id": KretaAPI.clientId,
-      "grant_type": "authorization_code",
-    });
+    final tokenRes = await client.post(
+      tokenUrl,
+      headers: KretaAPI.tokenHeaders,
+      body: KretaAPI.tokenRequestBody(code),
+    );
+    
+    client.close();
     
     if (tokenRes.statusCode == 200) {
       final data = jsonDecode(tokenRes.body);
@@ -196,16 +195,11 @@ class KretaClient {
     }
     
     final tokenUrl = Uri.parse(KretaAPI.login);
-    final tokenRes = await http.post(tokenUrl, headers: {
-      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-      'user-agent': 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0',
-    }, body: {
-      "code": code,
-      "code_verifier": "DSpuqj_HhDX4wzQIbtn8lr8NLE5wEi1iVLMtMK0jY6c",
-      "redirect_uri": "https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect",
-      "client_id": KretaAPI.clientId,
-      "grant_type": "authorization_code",
-    });
+    final tokenRes = await http.post(
+      tokenUrl,
+      headers: KretaAPI.tokenHeaders,
+      body: KretaAPI.tokenRequestBody(code),
+    );
     
     if (tokenRes.statusCode == 200) {
       final data = jsonDecode(tokenRes.body);
@@ -219,8 +213,7 @@ class KretaClient {
   }
 
   File _getCacheFile() {
-    final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
-    return File('$home/.folio_cache.json');
+    return File('${AppState.instance.configDir}/cache.json');
   }
 
   Map<String, dynamic> _loadCache() {
@@ -248,11 +241,7 @@ class KretaClient {
       throw Exception('Nincs bejelentkezve (hiányzó accessToken).');
     }
 
-    final headers = {
-      'authorization': 'Bearer $accessToken',
-      'apiKey': '21ff6c25-d1da-4a68-a811-c881a6057463',
-      'user-agent': 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0',
-    };
+    final headers = KretaAPI.apiHeaders(accessToken!);
 
     try {
       final response = await http.get(Uri.parse(url), headers: headers);
@@ -279,38 +268,38 @@ class KretaClient {
     }
   }
 
-  Future<Map<String, dynamic>?> getStudentData({bool silent = false}) async {
+  Future<Student?> getStudentData({bool silent = false}) async {
     final url = KretaAPI.student(instituteCode);
     final data = await _getAPI(url, silent: silent);
     if (data is Map<String, dynamic>) {
-      return data;
+      return Student.fromJson(data);
     }
     return null;
   }
 
-  Future<List<dynamic>?> getGrades() async {
+  Future<List<Grade>?> getGrades() async {
     final url = KretaAPI.grades(instituteCode);
     final data = await _getAPI(url);
     if (data is List) {
-      return data;
+      return data.map((e) => Grade.fromJson(e as Map<String, dynamic>)).toList();
     }
     return null;
   }
 
-  Future<List<dynamic>?> getTimetable(DateTime start, DateTime end) async {
+  Future<List<TimetableEntry>?> getTimetable(DateTime start, DateTime end) async {
     final url = KretaAPI.timetable(instituteCode, start: start, end: end);
     final data = await _getAPI(url);
     if (data is List) {
-      return data;
+      return data.map((e) => TimetableEntry.fromJson(e as Map<String, dynamic>)).toList();
     }
     return null;
   }
 
-  Future<List<dynamic>?> getAbsences() async {
+  Future<List<Absence>?> getAbsences() async {
     final url = KretaAPI.absences(instituteCode);
     final data = await _getAPI(url);
     if (data is List) {
-      return data;
+      return data.map((e) => Absence.fromJson(e as Map<String, dynamic>)).toList();
     }
     return null;
   }
@@ -327,19 +316,16 @@ class KretaClient {
     if (grades != null) {
       final Map<String, List<Map<String, dynamic>>> subjectGrades = {};
       for (var grade in grades) {
-        final tipus = grade['Tipus']?['Nev']?.toString().toLowerCase() ?? '';
-        // Kizárjuk a félévi, év végi és egyéb összefoglaló jegyeket
-        if (tipus.contains('vegi') || tipus.contains('felevevi') || tipus.contains('negyedevi')) {
+        if (grade.isSummaryGrade) {
           continue;
         }
         
-        final subject = grade['Tantargy']?['Nev'];
-        if (subject == null) continue;
+        final subject = grade.subject;
         
-        final numVal = grade['SzamErtek'];
+        final numVal = grade.numericValue;
         if (numVal == null || numVal == 0 || numVal > 5) continue;
         
-        final weight = grade['SulySzazalekErteke'] ?? 100;
+        final weight = grade.weight;
         
         subjectGrades.putIfAbsent(subject, () => []);
         subjectGrades[subject]!.add({
@@ -369,30 +355,30 @@ class KretaClient {
     return null;
   }
 
-  Future<List<dynamic>?> getExams() async {
+  Future<List<Exam>?> getExams() async {
     final url = KretaAPI.exams(instituteCode);
     final data = await _getAPI(url);
     if (data is List) {
-      return data;
+      return data.map((e) => Exam.fromJson(e as Map<String, dynamic>)).toList();
     }
     return null;
   }
 
-  Future<List<dynamic>?> getHomework({DateTime? start, String? id}) async {
+  Future<List<Homework>?> getHomework({DateTime? start, String? id}) async {
     start ??= DateTime.now().subtract(Duration(days: 30));
     final url = KretaAPI.homework(instituteCode, start: start, id: id);
     final data = await _getAPI(url);
     if (data is List) {
-      return data;
+      return data.map((e) => Homework.fromJson(e as Map<String, dynamic>)).toList();
     }
     return null;
   }
 
-  Future<List<dynamic>?> getMessages() async {
+  Future<List<Message>?> getMessages() async {
     final url = KretaAPI.messages();
     final data = await _getAPI(url);
     if (data is List) {
-      return data;
+      return data.map((e) => Message.fromJson(e as Map<String, dynamic>)).toList();
     }
     return null;
   }
@@ -402,14 +388,11 @@ class KretaClient {
     
     final tokenUrl = Uri.parse(KretaAPI.login);
     try {
-      final tokenRes = await http.post(tokenUrl, headers: {
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        'user-agent': 'eKretaStudent/264745 CFNetwork/1494.0.7 Darwin/23.4.0',
-      }, body: {
-        "client_id": KretaAPI.clientId,
-        "grant_type": "refresh_token",
-        "refresh_token": refreshToken!,
-      });
+      final tokenRes = await http.post(
+        tokenUrl,
+        headers: KretaAPI.tokenHeaders,
+        body: KretaAPI.refreshRequestBody(refreshToken!),
+      );
       
       if (tokenRes.statusCode == 200) {
         final data = jsonDecode(tokenRes.body);

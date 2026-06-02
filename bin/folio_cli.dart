@@ -8,6 +8,7 @@ void main(List<String> arguments) async {
     ..addOption('username', abbr: 'u', help: 'Felhasználónév (oktatási azonosító)')
     ..addOption('password', abbr: 'p', help: 'Jelszó')
     ..addFlag('daemon', abbr: 'd', negatable: false, help: 'Háttérfolyamatként futtatás értesítésekhez')
+    ..addFlag('version', abbr: 'v', negatable: false, help: 'Verzióinformáció megjelenítése')
     ..addFlag('help', abbr: 'h', negatable: false, help: 'Megjeleníti a súgót');
 
   ArgResults argResults;
@@ -16,6 +17,11 @@ void main(List<String> arguments) async {
   } catch (e) {
     print(e);
     exit(1);
+  }
+
+  if (argResults['version']) {
+    print('Folio CLI v1.0.0');
+    exit(0);
   }
 
   if (argResults['help']) {

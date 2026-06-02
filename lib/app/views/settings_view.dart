@@ -10,12 +10,15 @@ extension FolioCliAppSettingsView on FolioCliApp {
             'Új fiók hozzáadása',
             'Téma beállítása',
             'Háttér-értesítések beállítása',
+            'Főmenü testreszabása',
+            'Naptár exportálása (.ics)',
+            'Adatok exportálása (CSV)',
             'Összes mentett adat törlése (Kijelentkezés)', 
             'Vissza'
           ],
         ).interact();
   
-        if (action == 5) return;
+        if (action == 8) return;
   
         if (action == 0) {
           final authFile = _getAuthFile();
@@ -64,8 +67,7 @@ extension FolioCliAppSettingsView on FolioCliApp {
           ).interact();
           
           if (themeAction != 2) {
-            final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
-            final stateFile = File('$home/.folio_state.json');
+            final stateFile = AppState.instance.stateFile;
             Map<String, dynamic> state = {};
             if (stateFile.existsSync()) {
               try {
@@ -93,6 +95,63 @@ extension FolioCliAppSettingsView on FolioCliApp {
   
           _setupDaemon(enable);
         } else if (action == 4) {
+          _clearScreen();
+          final allOptions = [
+            'Tanulói adatlap',
+            'Legutóbbi jegyek',
+            'Órarend (Ezen a héten)',
+            'Mulasztások',
+            'Tantárgyi átlagok',
+            'Számonkérések',
+            'Házi feladatok',
+            'Üzenetek',
+            'Keresés'
+          ];
+          
+          final stateFile = AppState.instance.stateFile;
+          List<dynamic> hiddenItems = [];
+          Map<String, dynamic> state = {};
+          if (stateFile.existsSync()) {
+            try {
+              state = jsonDecode(stateFile.readAsStringSync());
+              if (state['hiddenMenuItems'] != null) {
+                hiddenItems = state['hiddenMenuItems'];
+              }
+            } catch (_) {}
+          }
+          
+          final defaults = List.generate(allOptions.length, (i) => !hiddenItems.contains(i));
+          
+          print('\n(TIPP: Használd a SZÓKÖZ / SPACE gombot a ki/bekapcsoláshoz, majd nyomj ENTER-t a mentéshez!)\n');
+          final selection = MultiSelect(
+            prompt: 'Válaszd ki a látható menüpontokat',
+            options: allOptions,
+            defaults: defaults,
+          ).interact();
+          
+          final newHiddenItems = [];
+          for (int i = 0; i < allOptions.length; i++) {
+            if (!selection.contains(i)) {
+              newHiddenItems.add(i);
+            }
+          }
+          
+          state['hiddenMenuItems'] = newHiddenItems;
+          stateFile.writeAsStringSync(jsonEncode(state));
+          
+          print('\nFőmenü sikeresen testreszabva!');
+          Input(prompt: 'Nyomj Enter-t a folytatáshoz...').interact();
+          _clearScreen();
+          
+        } else if (action == 5) {
+          _clearScreen();
+          await _exportCalendar();
+          _clearScreen();
+        } else if (action == 6) {
+          _clearScreen();
+          await _exportToCsv();
+          _clearScreen();
+        } else if (action == 7) {
           final confirm = Confirm(
             prompt: 'Biztosan törölni szeretnéd a mentett profilokat?',
             defaultValue: false,
@@ -127,8 +186,7 @@ extension FolioCliAppSettingsView on FolioCliApp {
           command = '""$exePath"" --daemon';
         }
         
-        final home = Platform.environment['HOME'] ?? Platform.environment['USERPROFILE'] ?? '.';
-        final vbsPath = '$home\\.folio_daemon.vbs';
+        final vbsPath = '${AppState.instance.configDir}\\daemon.vbs';
         final vbsFile = File(vbsPath);
         
         vbsFile.writeAsStringSync('Set WshShell = CreateObject("WScript.Shell")\nWshShell.Run "$command", 0\nSet WshShell = Nothing');

@@ -8,21 +8,30 @@ A bejelentkezéshez az oktatási azonosítóra és a jelszóra (általában a sz
 
 ## 2. Főmenü Funkciók
 - Tanulói adatlap: Személyes adatok és Célátlag kalkulátor.
-- Legutóbbi jegyek: A legfrissebb érdemjegyek listája.
+- Legutóbbi jegyek: A legfrissebb érdemjegyek listája színkódolt értékekkel.
 - Órarend: Dinamikus, táblázatos nézet az e heti és jövő heti órákról.
-- Mulasztások: Igazolt és igazolatlan hiányzások.
+- Mulasztások: Igazolt, igazolandó és igazolatlan hiányzások, valamint késések színkódolt nézete.
 - Tantárgyi átlagok: Színkódolt oszlopdiagram.
 - Számonkérések & Házi feladatok: Vizsgák és beadandók határidőkkel.
 - Üzenetek: A Kréta üzenőfal elérése.
+
+Minden listanézetnél elérhető az "Összes megtekintése" opció a régebbi bejegyzések betöltéséhez.
 - Keresés: Globális kereső a napló teljes tartalmában.
 
-## 3. Haladó Funkciók
-- Naptár exportálása (.ics): Az elkövetkező két hét órarendjének és vizsgáinak kimentése importálható naptárfájlba.
-- Adatok exportálása (CSV): Jegyek és mulasztások táblázatos kimentése.
-- Beállítások:
+## 3. Haladó Funkciók és Beállítások
+A főmenü "Beállítások" opciójában az alábbi funkciók érhetők el:
+- **Főmenü testreszabása**: Kiválaszthatod (SPACE gombbal), hogy mely menüpontok jelenjenek meg a főképernyőn, így elrejtheted a ritkán használt funkciókat.
+- **Exportálások**:
+  - Naptár exportálása (.ics): Az elkövetkező két hét órarendjének és vizsgáinak kimentése importálható naptárfájlba.
+  - Adatok exportálása (CSV): Jegyek és mulasztások táblázatos kimentése.
+- **Fiók és Téma**:
   - Profilváltás: Váltás a mentett fiókok között.
   - Téma beállítása: Világos és sötét terminál témák.
-  - Háttér-értesítések: Windows Feladatütemező integráció. A háttérben futva óránként és bejelentkezéskor ellenőrzi az új jegyeket, majd értesítést küld.
+- **Háttér-értesítések**: Windows Feladatütemező integráció. A háttérben futva óránként és bejelentkezéskor ellenőrzi az új jegyeket, majd értesítést küld.
+
+## 4. Rendszer és Frissítések
+- **Konfigurációs Fájlok**: Az alkalmazás minden mentett adatot a `~/.config/folio/` (Windows-on `C:\Users\Felhasználónév\.config\folio\`) könyvtárban tárol.
+- **Frissítések**: Az alkalmazás induláskor automatikusan ellenőrzi a GitHub-ot, és sárga szöveges üzenettel jelez, ha új verzió érhető el. A frissítés ezután a telepítés módjától függően (pl. `scoop update folio-cli`) elvégezhető.
 
 ## 4. Hibaelhárítás
 - Hálózati vagy API hibák: A Kréta szervereinek túlterheltsége vagy az API módosulása okozhatja. A program beépített védelemmel rendelkezik a leggyakoribb hibák (pl. V3 végpontok) ellen.
