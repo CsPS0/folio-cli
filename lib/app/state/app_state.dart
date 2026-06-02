@@ -67,17 +67,6 @@ class AppState {
     } catch (_) {}
   }
 
-  String getTheme() {
-    final state = _load(stateFile);
-    return state['theme'] ?? 'dark';
-  }
-
-  void setTheme(String theme) {
-    final state = _load(stateFile);
-    state['theme'] = theme;
-    _save(stateFile, state);
-  }
-
   Map<String, dynamic> getAuthData() {
     return _load(authFile);
   }

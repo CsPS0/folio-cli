@@ -24,9 +24,7 @@ A főmenü "Beállítások" opciójában az alábbi funkciók érhetők el:
 - **Exportálások**:
   - Naptár exportálása (.ics): Az elkövetkező két hét órarendjének és vizsgáinak kimentése importálható naptárfájlba.
   - Adatok exportálása (CSV): Jegyek és mulasztások táblázatos kimentése.
-- **Fiók és Téma**:
-  - Profilváltás: Váltás a mentett fiókok között.
-  - Téma beállítása: Világos és sötét terminál témák.
+- **Profilkezelés**: Váltás a mentett fiókok között.
 - **Háttér-értesítések**: Windows Feladatütemező integráció. A háttérben futva óránként és bejelentkezéskor ellenőrzi az új jegyeket, majd értesítést küld.
 
 ## 4. Rendszer és Frissítések

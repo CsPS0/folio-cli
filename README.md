@@ -13,9 +13,8 @@ A Folio CLI egy parancssoros alkalmazás a Kréta e-napló rendszerhez. Az iOS a
 - Jegyek, órarend, mulasztások, vizsgák és üzenetek gyors lekérdezése ("Összes megtekintése" opcióval).
 - Célátlag kalkulátor a szükséges érdemjegyek kiszámításához.
 - Globális kereső funkció.
-- Órarend exportálása ICS naptárformátumba és jegyek mentése CSV-be (a Beállításokon belül).
+- Naptár exportálása (.ics): Az elkövetkező két hét órarendjének és vizsgáinak kimentése importálható naptárfájlba.
 - Windows feladatütemező integráció (háttér-értesítések új jegyek esetén).
-- Személyre szabható főmenü és terminál témák.
 - Automatikus frissítés-ellenőrzés a legújabb GitHub verziókhoz.
 - Teljesen önálló futtatható állomány (`.exe`), használatához nincs szükség a Dart SDK telepítésére.
 

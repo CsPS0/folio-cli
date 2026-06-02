@@ -8,7 +8,6 @@ extension FolioCliAppSettingsView on FolioCliApp {
           options: [
             'Profilváltás',
             'Új fiók hozzáadása',
-            'Téma beállítása',
             'Háttér-értesítések beállítása',
             'Főmenü testreszabása',
             'Naptár exportálása (.ics)',
@@ -18,7 +17,7 @@ extension FolioCliAppSettingsView on FolioCliApp {
           ],
         ).interact();
   
-        if (action == 8) return;
+        if (action == 7) return;
   
         if (action == 0) {
           final authFile = _getAuthFile();
@@ -56,33 +55,6 @@ extension FolioCliAppSettingsView on FolioCliApp {
           await _performLoginFlow();
           return;
         } else if (action == 2) {
-          _clearScreen();
-          final themeAction = Select(
-            prompt: 'Válassz témát',
-            options: [
-              'Sötét (Folio Alapértelmezett)',
-              'Világos',
-              'Vissza'
-            ],
-          ).interact();
-          
-          if (themeAction != 2) {
-            final stateFile = AppState.instance.stateFile;
-            Map<String, dynamic> state = {};
-            if (stateFile.existsSync()) {
-              try {
-                state = jsonDecode(stateFile.readAsStringSync());
-              } catch (_) {}
-            }
-            state['theme'] = themeAction == 0 ? 'dark' : 'light';
-            stateFile.writeAsStringSync(jsonEncode(state));
-            
-            _applyTheme(state['theme']);
-            print('\nTéma sikeresen beállítva!');
-            Input(prompt: 'Nyomj Enter-t a folytatáshoz...').interact();
-          }
-          continue;
-        } else if (action == 3) {
           if (!Platform.isWindows) {
             print('Az értesítések jelenleg csak Windows rendszeren támogatottak.\n');
             continue;
@@ -94,7 +66,7 @@ extension FolioCliAppSettingsView on FolioCliApp {
           ).interact();
   
           _setupDaemon(enable);
-        } else if (action == 4) {
+        } else if (action == 3) {
           _clearScreen();
           final allOptions = [
             'Tanulói adatlap',
@@ -122,7 +94,7 @@ extension FolioCliAppSettingsView on FolioCliApp {
           
           final defaults = List.generate(allOptions.length, (i) => !hiddenItems.contains(i));
           
-          print('\n(TIPP: Használd a SZÓKÖZ / SPACE gombot a ki/bekapcsoláshoz, majd nyomj ENTER-t a mentéshez!)\n');
+          print('\n\x1B[38;5;208mHasználd a SPACE-t a ki/bekapcsoláshoz, majd nyomj ENTER-t a mentéshez!\x1B[0m\n');
           final selection = MultiSelect(
             prompt: 'Válaszd ki a látható menüpontokat',
             options: allOptions,
@@ -143,15 +115,15 @@ extension FolioCliAppSettingsView on FolioCliApp {
           Input(prompt: 'Nyomj Enter-t a folytatáshoz...').interact();
           _clearScreen();
           
-        } else if (action == 5) {
+        } else if (action == 4) {
           _clearScreen();
           await _exportCalendar();
           _clearScreen();
-        } else if (action == 6) {
+        } else if (action == 5) {
           _clearScreen();
           await _exportToCsv();
           _clearScreen();
-        } else if (action == 7) {
+        } else if (action == 6) {
           final confirm = Confirm(
             prompt: 'Biztosan törölni szeretnéd a mentett profilokat?',
             defaultValue: false,

@@ -90,15 +90,16 @@ extension FolioCliAppStudentView on FolioCliApp {
       final target = double.tryParse(targetStr.replaceAll(',', '.')) ?? 0.0;
       if (target <= currentAvg) {
         print('Ezt az átlagot már elérted! Gratulálok!');
-      } else if (target > 5.0) {
-        print('5.0 feletti átlagot lehetetlen elérni.');
+      } else if (target >= 5.0) {
+        print('\nCél: ${target.toStringAsFixed(2)}');
+        print('Ezt a célátlagot matematikailag már lehetetlen elérni, mert van 5-ösnél rosszabb jegyed (csak megközelíteni lehet végtelen sok ötössel).');
       } else {
         final requiredFives = (target * weightSum - sum) / (500 - target * 100);
         final intFives = requiredFives.ceil();
         print('\nCél: ${target.toStringAsFixed(2)}');
         print('Ehhez pontosan $intFives darab 100%-os ÖTÖSRE van szükséged.');
         
-        if (target <= 4.0) {
+        if (target < 4.0) {
           final requiredFours = (target * weightSum - sum) / (400 - target * 100);
           if (requiredFours > 0) {
             final intFours = requiredFours.ceil();

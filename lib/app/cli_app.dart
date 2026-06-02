@@ -20,52 +20,6 @@ part 'views/homework_messages_view.dart';
 part 'views/export_view.dart';
 
 class FolioCliApp {
-  String _currentBgAnsi = '';
-  String _currentFgAnsi = '';
-
-      void _applyTheme(String? theme) {
-    if (theme == 'light') {
-      _currentBgAnsi = '';
-      _currentFgAnsi = '\x1B[38;2;5;26;22m';
-      
-      final primaryColor = (String text) => '\x1B[38;2;68;210;168m$text\x1B[0m';
-      final secondaryColor = (String text) => '\x1B[38;2;5;26;22m$text\x1B[0m';
-      
-      Theme.defaultTheme = Theme.defaultTheme.copyWith(
-        activeItemStyle: primaryColor,
-        valueStyle: primaryColor,
-        messageStyle: secondaryColor,
-        hintStyle: secondaryColor,
-        defaultStyle: secondaryColor,
-        inputPrefix: '\x1B[38;2;68;210;168m? \x1B[0m',
-        inputSuffix: '\x1B[38;2;5;26;22m\u203A \x1B[0m',
-        successPrefix: '\x1B[38;2;68;210;168m\u2714 \x1B[0m',
-        successSuffix: '\x1B[38;2;5;26;22m\u00B7 \x1B[0m',
-        activeItemPrefix: '\x1B[38;2;68;210;168m\u276F \x1B[0m',
-      );
-    } else {
-      _currentBgAnsi = '';
-      _currentFgAnsi = '\x1B[38;2;241;253;251m';
-      
-      final primaryColor = (String text) => '\x1B[38;2;68;210;168m$text\x1B[0m';
-      final secondaryColor = (String text) => '\x1B[38;2;241;253;251m$text\x1B[0m';
-      
-      Theme.defaultTheme = Theme.defaultTheme.copyWith(
-        activeItemStyle: primaryColor,
-        valueStyle: primaryColor,
-        messageStyle: secondaryColor,
-        hintStyle: secondaryColor,
-        defaultStyle: secondaryColor,
-        inputPrefix: '\x1B[38;2;68;210;168m? \x1B[0m',
-        inputSuffix: '\x1B[38;2;241;253;251m\u203A \x1B[0m',
-        successPrefix: '\x1B[38;2;68;210;168m\u2714 \x1B[0m',
-        successSuffix: '\x1B[38;2;241;253;251m\u00B7 \x1B[0m',
-        activeItemPrefix: '\x1B[38;2;68;210;168m\u276F \x1B[0m',
-      );
-      print('');
-    }
-  }
-  
   Future<bool> _ensureClientReady() async {
     if (_client == null) {
       print('Hiba: Kliens nincs inicializálva. Próbálj újra bejelentkezni!');
@@ -75,7 +29,7 @@ class FolioCliApp {
   }
 
   void _clearScreen() {
-    stdout.write('\x1B[0m$_currentBgAnsi$_currentFgAnsi\x1B[2J\x1B[3J\x1B[H');
+    stdout.write('\x1B[2J\x1B[3J\x1B[H');
   }
 
   KretaClient? _client;
