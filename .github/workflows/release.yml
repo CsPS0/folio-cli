@@ -76,6 +76,7 @@ jobs:
         run: dart compile exe bin/folio_cli.dart -o ${{ matrix.artifact_name }}
 
       - name: Upload Release Asset
+        if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           fail_on_unmatched_files: false
