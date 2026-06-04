@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         include:
           - os: ubuntu-latest
             artifact_name: folio-cli-linux
@@ -21,6 +21,9 @@ jobs:
           - os: windows-latest
             artifact_name: folio-cli.exe
             asset_name: folio-cli.exe
+          - os: macos-latest
+            artifact_name: folio-cli-macos
+            asset_name: folio-cli-macos
 
     steps:
       - name: Checkout repository
@@ -38,6 +41,10 @@ jobs:
 
       - name: Compile Linux executable
         if: matrix.os == 'ubuntu-latest'
+        run: dart compile exe bin/folio_cli.dart -o ${{ matrix.artifact_name }}
+
+      - name: Compile macOS executable
+        if: matrix.os == 'macos-latest'
         run: dart compile exe bin/folio_cli.dart -o ${{ matrix.artifact_name }}
 
       - name: Upload Release Asset

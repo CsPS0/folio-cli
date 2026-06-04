@@ -1,0 +1,18 @@
+name: Publish to AUR
+on:
+  release:
+    types: [published]
+jobs:
+  aur-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Publish PKGBUILD
+        uses: KSerradell/aur-action@v1.0.0
+        with:
+          action_mode: commit
+          pkg_name: folio-cli-bin
+          pkg_dir: packaging/
+          commit_username: CsPS0
+          commit_email: csps0@users.noreply.github.com
+          ssh_private_key: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
