@@ -5,8 +5,6 @@
 
 A Folio CLI egy parancssoros alkalmazás a Kréta e-napló rendszerhez. Az iOS alkalmazás OAuth2 hitelesítési folyamatait szimulálva közvetlen terminálos elérést biztosít a diákok adatlapjához és jegyeihez. A projekt a Folio ökoszisztéma hivatalos parancssoros eszköze.
 
-> **English Summary:** Folio CLI is a fast, terminal-based client for the Hungarian 'Kréta' electronic school diary system. It provides direct access to grades, timetable, homework, and absences via a text-based UI, with multi-profile support and Windows background notifications.
-
 ## Főbb funkciók
 - Intézménykereső név alapján.
 - Automatikus hitelesítés és lokális multi-profil kezelés.
@@ -64,9 +62,12 @@ dart run
 ```
 
 ## Használat
-Az alkalmazás indítása után egy interaktív menürendszer fogad. 
+Ha valamelyik fenti csomagkezelővel telepítetted, az alkalmazást bárhonnan indíthatod a terminálból az alábbi paranccsal:
+```bash
+folio-cli
+```
 Gyors belépéshez és démon futtatáshoz támogatott argumentumok:
-`folio-cli.exe -i <intezmenykod> -u <felhasznalonev> -p <jelszo>` vagy `folio-cli.exe --daemon`
+`folio-cli -i <intezmenykod> -u <felhasznalonev> -p <jelszo>` vagy `folio-cli --daemon`
 
 ## Dokumentáció
 - [USER.md](docs/USER.md): Felhasználói útmutató.

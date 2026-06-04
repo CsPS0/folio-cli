@@ -19,8 +19,9 @@ Ha kóddal szeretnél hozzájárulni a projekthez:
 2. Klónozd a tárolót lokálisan.
 3. Hozz létre egy új ágat (branch) a módosításoknak.
 4. Készítsd el a fejlesztést a meglévő kódolási konvenciók betartásával.
-5. Futtass sikeres teszt buildet (`dart compile exe bin/folio_cli.dart`).
+5. Futtass sikeres teszt buildet (`dart compile exe bin/folio_cli.dart`) és ellenőrizd a működést (lehetőség szerint platform-függetlenül).
 6. Küldj egy Pull Requestet az eredeti repository felé.
+   - *Megjegyzés: A GitHub Actions (CI/CD) automatikusan teszteli és építi a Windows, Linux és macOS binárisokat, valamint frissíti az AUR, Scoop és Homebrew csomagokat, így ezzel a résszel nem kell manuálisan foglalkoznod.*
 
 ## Kódolási Szabályok
 - Nyelvhasználat: Az alkalmazás felhasználói felülete magyar nyelvű, a forráskód (változók, függvények) azonban szigorúan angol nyelvű kell maradjon.
