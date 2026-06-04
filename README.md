@@ -39,6 +39,12 @@ chmod +x folio-cli-linux
 ```bash
 yay -S folio-cli-bin
 ```
+*Ha nincs AUR helper (pl. `yay`) a gépeden, vagy a csomag még nem indexelődött, telepítheted manuálisan is:*
+```bash
+git clone https://aur.archlinux.org/folio-cli-bin.git
+cd folio-cli-bin
+makepkg -si
+```
 
 **macOS (Homebrew)**
 ```bash
