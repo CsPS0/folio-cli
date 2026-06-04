@@ -42,7 +42,7 @@ yay -S folio-cli-bin
 
 **macOS (Homebrew)**
 ```bash
-brew tap CsPS0/folio-cli
+brew tap CsPS0/folio-cli https://github.com/CsPS0/folio-cli
 brew install folio-cli
 ```
 
