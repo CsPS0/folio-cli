@@ -29,8 +29,8 @@ A főmenü "Beállítások" opciójában az alábbi funkciók érhetők el:
 
 ## 4. Rendszer és Frissítések
 - **Konfigurációs Fájlok**: Az alkalmazás minden mentett adatot a `~/.config/folio/` (Windows-on `C:\Users\Felhasználónév\.config\folio\`) könyvtárban tárol.
-- **Csomagkezelők**: A Folio CLI natívan támogatja a Windows (Scoop), macOS/Linux (Homebrew) és Arch Linux (AUR) csomagkezelőket, így a frissítések a rendszer saját eszközeivel automatizálhatók.
-- **Frissítések**: Az alkalmazás induláskor automatikusan ellenőrzi a GitHub-ot, és sárga szöveges üzenettel jelez, ha új verzió érhető el. A frissítés ezután a telepítés módjától függően (pl. `scoop update folio-cli`, `brew upgrade folio-cli` vagy `yay -S folio-cli-bin`) könnyedén elvégezhető.
+- **Csomagkezelők**: A Folio CLI natívan támogatja a Windows (Scoop), macOS/Linux (Homebrew), Arch Linux (AUR) és Debian/Ubuntu (APT) csomagkezelőket, így a frissítések a rendszer saját eszközeivel automatizálhatók.
+- **Frissítések**: Az alkalmazás induláskor automatikusan ellenőrzi a GitHub-ot, és sárga szöveges üzenettel jelez, ha új verzió érhető el. A frissítés ezután a telepítés módjától függően (pl. `scoop update folio-cli`, `brew upgrade folio-cli`, `sudo apt upgrade folio-cli` vagy `yay -Syu`) könnyedén elvégezhető.
 
 ## 5. Hibaelhárítás
 - **Hálózati vagy API hibák**: A Kréta szervereinek túlterheltsége vagy az API módosulása okozhatja. A program beépített védelemmel rendelkezik a leggyakoribb hibák ellen.
