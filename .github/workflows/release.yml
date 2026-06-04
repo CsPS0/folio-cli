@@ -62,6 +62,14 @@ jobs:
           
           dpkg-deb --build deb_pkg folio-cli_${VERSION}_amd64.deb
 
+      - name: Upload .deb for APT Repo
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: debian-package
+          path: "*.deb"
+          retention-days: 1
+
       - name: Compile macOS executable
         if: matrix.os == 'macos-latest'
         run: dart compile exe bin/folio_cli.dart -o ${{ matrix.artifact_name }}
@@ -75,3 +83,28 @@ jobs:
             *.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  apt-repo:
+    name: Build APT Repository
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download .deb packages
+        uses: actions/download-artifact@v4
+        with:
+          name: debian-package
+          path: deb_packages
+          
+      - name: Generate APT Repository
+        uses: smeinecke/apt-repo-action@v2.1.4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          repo_supported_arch: amd64
+          repo_supported_version: stable
+          file: deb_packages/*.deb
+          file_target_version: stable
+          private_key: ${{ secrets.APT_SIGNING_KEY }}
+          public_key: ${{ secrets.APT_SIGNING_PUBKEY }}

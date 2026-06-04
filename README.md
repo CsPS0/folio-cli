@@ -35,6 +35,20 @@ chmod +x folio-cli-linux
 
 ### Csomagkezelők
 
+**Debian / Ubuntu / Linux Mint (APT Repository)**
+A program elérhető egy hivatalos APT csomagtárolóból is, így az operációs rendszer automatikusan tudja frissíteni.
+```bash
+# 1. Hozzáadjuk a hitelesítő kulcsot
+curl -fsSL https://CsPS0.github.io/folio-cli/public.key | sudo gpg --dearmor -o /usr/share/keyrings/folio-cli-archive-keyring.gpg
+
+# 2. Hozzáadjuk a tárolót a rendszerhez
+echo "deb [signed-by=/usr/share/keyrings/folio-cli-archive-keyring.gpg] https://CsPS0.github.io/folio-cli stable main" | sudo tee /etc/apt/sources.list.d/folio-cli.list > /dev/null
+
+# 3. Telepítés
+sudo apt update
+sudo apt install folio-cli
+```
+
 **Arch Linux (AUR)**
 ```bash
 yay -S folio-cli-bin
