@@ -1,6 +1,6 @@
 # Maintainer: Solti Csongor Péter <csps0@users.noreply.github.com>
 pkgname=folio-cli-bin
-pkgver=1.0.2
+pkgver=1.0.3
 pkgrel=1
 pkgdesc="A modern, fast CLI application for the Hungarian Kreta e-diary system."
 arch=('x86_64')
