@@ -19,8 +19,8 @@ jobs:
             artifact_name: folio-cli-linux
             asset_name: folio-cli-linux
           - os: windows-latest
-            artifact_name: folio_cli.exe
-            asset_name: folio_cli.exe
+            artifact_name: folio-cli.exe
+            asset_name: folio-cli.exe
 
     steps:
       - name: Checkout repository

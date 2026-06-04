@@ -66,7 +66,16 @@ extension FolioCliAppLoginFlow on FolioCliApp {
       
       String pastedCode = '';
       while (pastedCode.isEmpty) {
-        pastedCode = Input(prompt: 'Ide másold be a kódot (vagy a teljes linket)').interact().trim();
+        if (Platform.isWindows) {
+          pastedCode = Input(prompt: 'Ide másold be a kódot (vagy a teljes linket)').interact().trim();
+        } else {
+          stdout.write('Ide másold be a kódot (vagy a teljes linket): ');
+          pastedCode = stdin.readLineSync()?.trim() ?? '';
+        }
+        
+        if (pastedCode.isEmpty || pastedCode == 'P') {
+          pastedCode = '';
+        }
       }
       
       print('\nBelépés folyamatban a kóddal...');
