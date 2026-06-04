@@ -107,4 +107,3 @@ jobs:
           file: deb_packages/*.deb
           file_target_version: stable
           private_key: ${{ secrets.APT_SIGNING_KEY }}
-          public_key: ${{ secrets.APT_SIGNING_PUBKEY }}
