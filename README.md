@@ -19,7 +19,7 @@ A Folio CLI egy parancssoros alkalmazás a Kréta e-napló rendszerhez. Az iOS a
 ## Telepítés
 
 ### Letöltés (Manuális / Ajánlott)
-Töltsd le az előre lefordított binárisokat a [Releases](https://github.com/CsPS0/folio-cli/releases) oldalról.
+Töltsd le az előre lefordított binárisokat a [Releases](https://github.com/CsPS0/folio-cli/releases) oldalról. Ubuntu/Debian/Mint felhasználók számára külön `.deb` telepítőfájl is elérhető!
 
 **Linux bináris futtatása lépésről lépésre:**
 ```bash
