@@ -1,0 +1,17 @@
+Codename: stable
+Date: Thu, 04 Jun 2026 20:09:50 UTC
+Architectures: amd64
+Components: main
+Description: CsPS0/folio-cli
+MD5Sum:
+ 0d76eaeff79458423ee0a184bc2620be 480 main/binary-amd64/Packages
+ 6094d51891f8a2f46c44db7e0baf7bfa 373 main/binary-amd64/Packages.gz
+ 66679a74d792f03ea67a27c381bf4fa0 65 main/binary-amd64/Release
+SHA1:
+ d776a23e8a6bc5be83a960bf5b36a5ebed6a3746 480 main/binary-amd64/Packages
+ c44de4de2e9ee605da5a7b924a7885171c4685c6 373 main/binary-amd64/Packages.gz
+ e910a8a18febd6111a5cee10bbb2d894bfe68cd3 65 main/binary-amd64/Release
+SHA256:
+ aab8e74003deaf26aa98df79853bde8533cfd4f520c15c1ee617245e7ab402d9 480 main/binary-amd64/Packages
+ a06b93e0c305d8603440a3d69590f1b734615cba0d68617dc00d1fa3c1383dea 373 main/binary-amd64/Packages.gz
+ 253936168b464c1a23e98557e5c42c853d0b5f292004574918f2bbcab888d35d 65 main/binary-amd64/Release

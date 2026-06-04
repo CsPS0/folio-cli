@@ -1,0 +1,36 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Codename: stable
+Date: Thu, 04 Jun 2026 20:09:50 UTC
+Architectures: amd64
+Components: main
+Description: CsPS0/folio-cli
+MD5Sum:
+ 0d76eaeff79458423ee0a184bc2620be 480 main/binary-amd64/Packages
+ 6094d51891f8a2f46c44db7e0baf7bfa 373 main/binary-amd64/Packages.gz
+ 66679a74d792f03ea67a27c381bf4fa0 65 main/binary-amd64/Release
+SHA1:
+ d776a23e8a6bc5be83a960bf5b36a5ebed6a3746 480 main/binary-amd64/Packages
+ c44de4de2e9ee605da5a7b924a7885171c4685c6 373 main/binary-amd64/Packages.gz
+ e910a8a18febd6111a5cee10bbb2d894bfe68cd3 65 main/binary-amd64/Release
+SHA256:
+ aab8e74003deaf26aa98df79853bde8533cfd4f520c15c1ee617245e7ab402d9 480 main/binary-amd64/Packages
+ a06b93e0c305d8603440a3d69590f1b734615cba0d68617dc00d1fa3c1383dea 373 main/binary-amd64/Packages.gz
+ 253936168b464c1a23e98557e5c42c853d0b5f292004574918f2bbcab888d35d 65 main/binary-amd64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEExtADLQeMsZT+WB/Hiq8fDIr4BsYFAmoh244ACgkQiq8fDIr4
+BsbuXhAAkEdUIOTR85RsZ/jOrJUgY4qaRwyFvV+j8N/9XnPQCiwlGmUEQcTP0Qxv
+CseCjlEd2AOwMwNdjpgEXBzPT+A15RkXGZ6zChDFjOkRhwLmapelo9LqbnoVhkoJ
+u33vqwI+D46Pa7liQmMOT8yU4lepEYaY6YxKcwVdAXtOZt4G1QhRzSorcHf7m/6p
+US18Ir1Na+hv6ejL7vRi5C/LcJx5PeNyX3jknstRiyxlUNZTZFQfXwcou9RN4pZk
+5FNlFUOCI/IvrEmcFvUsCE8XyIZZl3eE1lq9lGgsdy6L09xPv1zSasKUih1IdSg2
+kxl9io5xYgrhqGBkojUEI5CoTOzdscp60mKHpAG5jMSiDGS1BQ+u4yaXd704and+
+nhQGzs5q3N9hGbLZDUDYFgfG0jLmMnX3u6dlpR7JSEcVNwHZwTu3TCVDMkmiGegb
+TymnBmlIqAB4sHS/Wvbupbq4VNYqgJoBjGsX8VrGuEja8a2xugep4BxNH5/V224l
+sLqscgkIPysoNfihS7z9Pa6Qj6FsLtxa4JOsd3iT96x+tzTTVMRBce4mMVgVpIgf
+5WsqRao6i0nzmemNSl6wQ9JBoLZwCFaltDiR7f915DGwnn2N0/64YYczwFIljr3K
+7Ejr1iXfZfSp95sFcbdhDTghrMxLKNljrA9aoo5c0gFq0UXE1xc=
+=U7xT
+-----END PGP SIGNATURE-----

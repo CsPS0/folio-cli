@@ -1,0 +1,7 @@
+Description: CsPS0/folio-cli
+Codename: stable
+Architectures: amd64
+Components: main
+SignWith: C6D0032D078CB194FE581FC78AAF1F0C8AF806C6
+
+
