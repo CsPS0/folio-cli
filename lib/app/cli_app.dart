@@ -124,7 +124,7 @@ class FolioCliApp {
    |  ___|__ | (_) ___  
    | |_ / _ \| | |/ _ \ 
    |  _| (_) | | | (_) |
-   |_|  \___/|_|_|\___/ CLI v1.1.0
+   |_|  \___/|_|_|\___/ CLI v1.1.1
     ''');
     print('\x1B[0m');
   }
@@ -160,7 +160,7 @@ class FolioCliApp {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final latestVersion = data['tag_name'] as String?;
-        const currentVersion = 'v1.1.0'; // TODO: dinamikus verziószám
+        const currentVersion = 'v1.1.1'; // TODO: dinamikus verziószám
         
         if (latestVersion != null && latestVersion != currentVersion && latestVersion.startsWith('v')) {
           print('\x1B[33m\n=============================================================');

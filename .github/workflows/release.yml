@@ -38,12 +38,12 @@ jobs:
 
       - name: Compile Windows executable
         if: matrix.os == 'windows-latest'
-        run: dart compile exe bin/folio_cli.dart --obfuscate --save-obfuscation-map=obfuscation-windows.map -o ${{ matrix.artifact_name }}
+        run: dart compile exe bin/folio_cli.dart -S debug-info-windows.map -o ${{ matrix.artifact_name }}
 
       - name: Compile Linux executable & Create .deb package
         if: matrix.os == 'ubuntu-latest'
         run: |
-          dart compile exe bin/folio_cli.dart --obfuscate --save-obfuscation-map=obfuscation-linux.map -o ${{ matrix.artifact_name }}
+          dart compile exe bin/folio_cli.dart -S debug-info-linux.map -o ${{ matrix.artifact_name }}
           
           VERSION=${GITHUB_REF_NAME#v}
           if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then VERSION="1.0.0"; fi
@@ -75,7 +75,7 @@ jobs:
 
       - name: Compile macOS executable
         if: matrix.os == 'macos-latest'
-        run: dart compile exe bin/folio_cli.dart --obfuscate --save-obfuscation-map=obfuscation-macos.map -o ${{ matrix.artifact_name }}
+        run: dart compile exe bin/folio_cli.dart -S debug-info-macos.map -o ${{ matrix.artifact_name }}
 
       - name: Upload Release Asset
         if: github.event_name == 'release'
