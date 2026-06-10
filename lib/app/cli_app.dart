@@ -9,6 +9,7 @@ import 'package:interact/interact.dart';
 import 'package:folio_cli/api/client.dart';
 import 'package:folio_cli/utils/chart_generator.dart';
 import 'package:folio_cli/utils/ics_exporter.dart';
+import 'package:folio_cli/utils/encryption.dart';
 import 'state/app_state.dart';
 
 part 'login/auth_manager.dart';
@@ -49,7 +50,15 @@ class FolioCliApp {
 
     try {
       final content = await authFile.readAsString();
-      dynamic data = jsonDecode(content);
+      dynamic data;
+      // Handle plain-text vs encrypted
+      if (content.trim().startsWith('{')) {
+        data = jsonDecode(content);
+        // We let auth_manager.dart handle the actual encryption/migration upon first successful login/save.
+      } else {
+        final decrypted = EncryptionUtil.decrypt(content);
+        data = jsonDecode(decrypted);
+      }
       
       Map<String, dynamic>? activeProfile;
 
@@ -115,7 +124,7 @@ class FolioCliApp {
    |  ___|__ | (_) ___  
    | |_ / _ \| | |/ _ \ 
    |  _| (_) | | | (_) |
-   |_|  \___/|_|_|\___/ CLI v1.0.0
+   |_|  \___/|_|_|\___/ CLI v1.1.0
     ''');
     print('\x1B[0m');
   }
@@ -144,19 +153,24 @@ class FolioCliApp {
 
   Future<void> _checkForUpdates() async {
     try {
-      // NOTE: Replace YOUR_USERNAME with the actual GitHub username where the repo is hosted
       final res = await http.get(
-        Uri.parse('https://api.github.com/repos/YOUR_USERNAME/folio-cli/releases/latest'),
+        Uri.parse('https://api.github.com/repos/CsPS0/folio-cli/releases/latest'),
       ).timeout(Duration(seconds: 2));
       
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final latestVersion = data['tag_name'] as String?;
-        // Assuming current version is v1.0.0
-        if (latestVersion != null && latestVersion != 'v1.0.0' && latestVersion.startsWith('v')) {
-          print('\x1B[33m\n[!] Új verzió elérhető: $latestVersion (Jelenlegi: v1.0.0)');
-          print('[!] Ha Scoop-on keresztül telepítetted, futtasd a következő parancsot:');
-          print('    scoop update folio-cli\x1B[0m\n');
+        const currentVersion = 'v1.1.0'; // TODO: dinamikus verziószám
+        
+        if (latestVersion != null && latestVersion != currentVersion && latestVersion.startsWith('v')) {
+          print('\x1B[33m\n=============================================================');
+          print('[!] Új Folio CLI verzió érhető el: $latestVersion (Jelenlegi: $currentVersion)');
+          print('Kérjük, frissíts a legújabb verzióra a következő parancsok egyikével:');
+          print('  - Windows (Scoop):     scoop update folio-cli');
+          print('  - Linux (APT):         sudo apt update && sudo apt install folio-cli');
+          print('  - macOS (Homebrew):    brew upgrade folio-cli');
+          print('  - Manuális szkript:    curl -fsSL https://raw.githubusercontent.com/CsPS0/folio-cli/main/install.sh | bash');
+          print('=============================================================\x1B[0m\n');
         }
       }
     } catch (_) {

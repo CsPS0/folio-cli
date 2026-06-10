@@ -1,3 +1,9 @@
+import 'dart:io';
+import 'dart:convert';
+import '../state/app_state.dart';
+import '../../utils/encryption.dart';
+import '../../api/client.dart';
+
 part of '../cli_app.dart';
 
 extension FolioCliAppAuthManager on FolioCliApp {
@@ -16,20 +22,24 @@ extension FolioCliAppAuthManager on FolioCliApp {
       if (authFile.existsSync()) {
         try {
           final content = await authFile.readAsString();
-          final data = jsonDecode(content);
-          if (data is Map<String, dynamic>) {
-            if (data.containsKey('profiles')) {
+          // Migration check: If it starts with '{', it's plain text JSON
+          if (content.trim().startsWith('{')) {
+            final data = jsonDecode(content);
+            if (data is Map<String, dynamic> && data.containsKey('profiles')) {
               root = data;
-            } else if (data.containsKey('accessToken')) {
-              root['profiles'].add({
-                'name': 'Régi Profil',
-                'instituteCode': data['instituteCode'],
-                'accessToken': data['accessToken'],
-                'refreshToken': data['refreshToken']
-              });
+            }
+            // Immediately encrypt it
+            await authFile.writeAsString(EncryptionUtil.encrypt(jsonEncode(root)));
+          } else {
+            final decrypted = EncryptionUtil.decrypt(content);
+            final data = jsonDecode(decrypted);
+            if (data is Map<String, dynamic> && data.containsKey('profiles')) {
+              root = data;
             }
           }
-        } catch (_) {}
+        } catch (e) {
+          print('Nem sikerült betölteni a profilokat: $e');
+        }
       }
   
       List profiles = root['profiles'];
@@ -57,7 +67,7 @@ extension FolioCliAppAuthManager on FolioCliApp {
         root['activeProfileIndex'] = profiles.length - 1;
       }
   
-      await authFile.writeAsString(jsonEncode(root));
+      await authFile.writeAsString(EncryptionUtil.encrypt(jsonEncode(root)));
     }
 
 }

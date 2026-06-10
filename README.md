@@ -42,7 +42,7 @@ A program elérhető egy hivatalos APT csomagtárolóból is, így az operáció
 curl -fsSL https://CsPS0.github.io/folio-cli/public.key | sudo gpg --dearmor -o /usr/share/keyrings/folio-cli-archive-keyring.gpg
 
 # 2. Hozzáadjuk a tárolót a rendszerhez
-echo "deb [signed-by=/usr/share/keyrings/folio-cli-archive-keyring.gpg] https://CsPS0.github.io/folio-cli stable main" | sudo tee /etc/apt/sources.list.d/folio-cli.list > /dev/null
+echo "deb [signed-by=/usr/share/keyrings/folio-cli-archive-keyring.gpg] https://CsPS0.github.io/folio-cli/repo stable main" | sudo tee /etc/apt/sources.list.d/folio-cli.list > /dev/null
 
 # 3. Telepítés
 sudo apt update
@@ -93,3 +93,4 @@ Gyors belépéshez és démon futtatáshoz támogatott argumentumok:
 - [USER.md](docs/USER.md): Felhasználói útmutató.
 - [DEV.md](docs/DEV.md): Fejlesztői és architektúrális dokumentáció.
 - [CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md): Irányelvek hozzájárulóknak.
+- [DATA_SECURITY.md](docs/DATA_SECURITY.md): Adatkezelés és biztonsági tájékoztató.
