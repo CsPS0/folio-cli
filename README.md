@@ -18,68 +18,83 @@ A Folio CLI egy parancssoros alkalmazás a Kréta e-napló rendszerhez. Az iOS a
 
 ## Telepítés
 
-### Letöltés (Manuális / Ajánlott)
-Töltsd le az előre lefordított binárisokat a [Releases](https://github.com/CsPS0/folio-cli/releases) oldalról. Ubuntu/Debian/Mint felhasználók számára külön `.deb` telepítőfájl is elérhető!
+- Egyszerűen: szerezz egy előre megépített futtatható programot [innétről](https://github.com/CsPS0/folio-cli/releases/latest). Ubuntu/Debian/Mint felhasználók számára külön `.deb` telepítőfájl is elérhető!
 
-**Linux bináris futtatása lépésről lépésre:**
-```bash
-# 1. Töltsd le a fájlt a gépedre:
-wget https://github.com/CsPS0/folio-cli/releases/download/v1.0.1/folio-cli-linux
+Ha esetleg nem elérhető a platformodra ([tudasd ezt velünk](https://github.com/CsPS0/folio-cli/issues/new)), nem tetszik az ötlet, vagy nem elég friss:
 
-# 2. Adj neki futtatási jogosultságot:
-chmod +x folio-cli-linux
+   <details>
+   <summary>Linux bináris kézi futtatása</summary>
 
-# 3. Indítsd el az alkalmazást:
-./folio-cli-linux
-```
+> ```bash
+> wget https://github.com/CsPS0/folio-cli/releases/download/v1.0.1/folio-cli-linux
+> chmod +x folio-cli-linux
+> ./folio-cli-linux
+> ```
 
-### Csomagkezelők
+   </details>
 
-**Debian / Ubuntu / Linux Mint (APT Repository)**
-A program elérhető egy hivatalos APT csomagtárolóból is, így az operációs rendszer automatikusan tudja frissíteni.
-```bash
-# 1. Hozzáadjuk a hitelesítő kulcsot
-curl -fsSL https://CsPS0.github.io/folio-cli/public.key | sudo gpg --dearmor -o /usr/share/keyrings/folio-cli-archive-keyring.gpg
+   <details>
+   <summary>Debian / Ubuntu / Linux Mint (APT)</summary>
 
-# 2. Hozzáadjuk a tárolót a rendszerhez
-echo "deb [signed-by=/usr/share/keyrings/folio-cli-archive-keyring.gpg] https://CsPS0.github.io/folio-cli/repo stable main" | sudo tee /etc/apt/sources.list.d/folio-cli.list > /dev/null
+> ```bash
+> curl -fsSL https://CsPS0.github.io/folio-cli/public.key | sudo gpg --dearmor -o /usr/share/keyrings/folio-cli-archive-keyring.gpg
+>
+> echo "deb [signed-by=/usr/share/keyrings/folio-cli-archive-keyring.gpg] https://CsPS0.github.io/folio-cli/repo stable main" | sudo tee /etc/apt/sources.list.d/folio-cli.list > /dev/null
+>
+> sudo apt update
+> sudo apt install folio-cli
+> ```
 
-# 3. Telepítés
-sudo apt update
-sudo apt install folio-cli
-```
+   </details>
 
-**Arch Linux (AUR)**
-```bash
-yay -S folio-cli-bin
-```
-*Ha nincs AUR helper (pl. `yay`) a gépeden, vagy a csomag még nem indexelődött, telepítheted manuálisan is:*
-```bash
-git clone https://aur.archlinux.org/folio-cli-bin.git
-cd folio-cli-bin
-makepkg -si
-```
+   <details>
+   <summary>Arch Linux (AUR)</summary>
 
-**macOS (Homebrew)**
-```bash
-brew tap CsPS0/folio-cli https://github.com/CsPS0/folio-cli
-brew install folio-cli
-```
+> ```bash
+> yay -S folio-cli-bin
+> ```
+> Ha nincs AUR helper (pl. `yay`) a gépeden:
+> ```bash
+> git clone https://aur.archlinux.org/folio-cli-bin.git
+> cd folio-cli-bin
+> makepkg -si
+> ```
 
-**Windows (Scoop)**
-```bash
-scoop bucket add folio https://github.com/CsPS0/folio-cli
-scoop install folio-cli
-```
+   </details>
 
-### Forráskódból történő futtatás és fordítás:
-```bash
-git clone https://github.com/CsPS0/folio-cli.git
-cd folio-cli
-dart pub get
-dart compile exe bin/folio_cli.dart
-dart run
-```
+   <details>
+   <summary>macOS (Homebrew)</summary>
+
+> ```bash
+> brew tap CsPS0/folio-cli https://github.com/CsPS0/folio-cli
+> brew install folio-cli
+> ```
+
+   </details>
+
+   <details>
+   <summary>Windows (Scoop)</summary>
+
+> ```bash
+> scoop bucket add folio https://github.com/CsPS0/folio-cli
+> scoop install folio-cli
+> ```
+
+   </details>
+
+   <details>
+   <summary>Forráskódból történő fordítás</summary>
+
+> [Dart SDK](https://dart.dev/get-dart) szükséges.
+> ```bash
+> git clone https://github.com/CsPS0/folio-cli.git
+> cd folio-cli
+> dart pub get
+> dart compile exe bin/folio_cli.dart
+> dart run
+> ```
+
+   </details>
 
 ## Használat
 Ha valamelyik fenti csomagkezelővel telepítetted, az alkalmazást bárhonnan indíthatod a terminálból az alábbi paranccsal:
@@ -94,3 +109,19 @@ Gyors belépéshez és démon futtatáshoz támogatott argumentumok:
 - [DEV.md](docs/DEV.md): Fejlesztői és architektúrális dokumentáció.
 - [CONTRIBUTIONS.md](docs/CONTRIBUTIONS.md): Irányelvek hozzájárulóknak.
 - [DATA_SECURITY.md](docs/DATA_SECURITY.md): Adatkezelés és biztonsági tájékoztató.
+
+## Elismerések, alternatívák, hasonló appok, dokumentáció
+
+Minden használatba vett Dart csomagnak köszönet, [itt](./pubspec.yaml) találhatóak.
+Kréta dokumentáció: <https://nzx.hu/kreta-api/>
+Rengeteg dolgot tartalmazó dokumentáció: <https://docs.zan1456.dev/>
+
+### Működő alternatívák
+- [Firka](https://github.com/QwIT-Development/firka) & [firka-legacy](https://github.com/QwIT-Development/app-legacy)
+- [Folio](https://github.com/Zan1456/folio)
+- [rsfilc](https://github.com/jarjk/rsfilc) (Rust alapú Filc Terminál)
+
+### Archivált projektek
+- [Szivacs Napló](https://github.com/boapps/Szivacs-Naplo)
+- [Filc](https://github.com/filc)
+- [reFilc](https://github.com/Monke14/refilc)
