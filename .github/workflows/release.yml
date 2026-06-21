@@ -77,6 +77,13 @@ jobs:
         if: matrix.os == 'macos-latest'
         run: dart compile exe bin/folio_cli.dart -S debug-info-macos.map -o ${{ matrix.artifact_name }}
 
+      - name: Upload Workflow Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}
+          path: ${{ matrix.artifact_name }}
+          retention-days: 1
+
       - name: Upload Release Asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
@@ -111,3 +118,68 @@ jobs:
           file: deb_packages/*.deb
           file_target_version: stable
           private_key: ${{ secrets.APT_SIGNING_KEY }}
+
+  update-manifests:
+    name: Auto-update Scoop & Homebrew Manifests
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Windows Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-windows-latest
+          path: bin-win
+
+      - name: Download Linux Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-ubuntu-latest
+          path: bin-lin
+
+      - name: Download macOS Binary
+        uses: actions/download-artifact@v4
+        with:
+          name: binary-macos-latest
+          path: bin-mac
+
+      - name: Update Manifests
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          
+          WIN_HASH=$(sha256sum bin-win/folio-cli.exe | awk '{print $1}')
+          LIN_HASH=$(sha256sum bin-lin/folio-cli-linux | awk '{print $1}')
+          MAC_HASH=$(sha256sum bin-mac/folio-cli-macos | awk '{print $1}')
+          
+          echo "Windows hash: $WIN_HASH"
+          echo "Linux hash: $LIN_HASH"
+          echo "macOS hash: $MAC_HASH"
+          
+          # Update Scoop json
+          jq --arg ver "$VERSION" --arg hash "$WIN_HASH" \
+            '.version = $ver | .architecture["64bit"].url = "https://github.com/CsPS0/folio-cli/releases/download/v"+$ver+"/folio-cli.exe" | .architecture["64bit"].hash = $hash' \
+            bucket/folio-cli.json > temp.json && mv temp.json bucket/folio-cli.json
+            
+          # Update Homebrew formula version and URLs
+          sed -i "s/version \".*\"/version \"$VERSION\"/g" Formula/folio-cli.rb
+          sed -i "s|releases/download/v.*/folio-cli-macos|releases/download/v$VERSION/folio-cli-macos|g" Formula/folio-cli.rb
+          sed -i "s|releases/download/v.*/folio-cli-linux|releases/download/v$VERSION/folio-cli-linux|g" Formula/folio-cli.rb
+          
+          # Replace hashes in Formula
+          python3 -c "
+          import re
+          content = open('Formula/folio-cli.rb').read()
+          content = re.sub(r'(on_macos do\s+url.*?\s+sha256\s+\")[a-f0-9]+(\")', r'\g<1>'$MAC_HASH'\g<2>', content, flags=re.DOTALL)
+          content = re.sub(r'(on_linux do\s+url.*?\s+sha256\s+\")[a-f0-9]+(\")', r'\g<1>'$LIN_HASH'\g<2>', content, flags=re.DOTALL)
+          open('Formula/folio-cli.rb', 'w').write(content)
+          "
+          
+          # Configure Git and Push
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add bucket/folio-cli.json Formula/folio-cli.rb
+          git commit -m "chore: auto-update scoop and homebrew manifests to v$VERSION [skip ci]"
+          git push
