@@ -1,12 +1,12 @@
 {
-    "version": "1.0.3",
+    "version": "1.2.0",
     "description": "Terminal-based client for the Hungarian Kréta electronic school diary system",
     "homepage": "https://github.com/CsPS0/folio-cli",
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/CsPS0/folio-cli/releases/download/v1.0.2/folio-cli.exe",
-            "hash": "1b727dcd72a7bb1173cdc0ed2292435bcfd2ce2870fb2df8bd46ed9b16c0b862"
+            "url": "https://github.com/CsPS0/folio-cli/releases/download/v1.2.0/folio-cli.exe",
+            "hash": "d4feb763d146f478d9917cf3a91ae4ea959acb49fae3f0cfaa7278061d33187f"
         }
     },
     "bin": "folio-cli.exe",
