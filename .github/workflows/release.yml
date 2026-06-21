@@ -177,9 +177,14 @@ jobs:
           open('Formula/folio-cli.rb', 'w').write(content)
           "
           
+          # Update AUR PKGBUILD version and hash
+          sed -i "s/pkgver=.*/pkgver=$VERSION/g" packaging/PKGBUILD
+          sed -i "s/pkgrel=.*/pkgrel=1/g" packaging/PKGBUILD
+          sed -i "s/sha256sums=.*/sha256sums=('$LIN_HASH')/g" packaging/PKGBUILD
+
           # Configure Git and Push
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add bucket/folio-cli.json Formula/folio-cli.rb
-          git commit -m "chore: auto-update scoop and homebrew manifests to v$VERSION [skip ci]"
+          git add bucket/folio-cli.json Formula/folio-cli.rb packaging/PKGBUILD
+          git commit -m "chore: auto-update scoop, homebrew, and aur manifests to v$VERSION [skip ci]"
           git push
