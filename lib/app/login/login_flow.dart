@@ -11,7 +11,7 @@ extension FolioCliAppLoginFlow on FolioCliApp {
   
       if (hasCodeChoice == 1) {
         while (instituteCode.isEmpty) {
-          final query = Input(prompt: 'Keresés az iskola neve alapján (min 3 karakter)').interact();
+          final query = Utf8Input(prompt: 'Keresés az iskola neve alapján (min 3 karakter)').interact();
           if (query.length >= 3) {
             print('Keresés folyamatban...');
             final results = await KretaClient.searchSchools(query);
@@ -36,55 +36,77 @@ extension FolioCliAppLoginFlow on FolioCliApp {
           }
         }
       } else {
-        instituteCode = Input(prompt: 'Intézmény kódja (pl. bmszc-neumann)').interact();
+        instituteCode = Utf8Input(prompt: 'Intézmény kódja (pl. bmszc-neumann)').interact();
       }
   
       _client = KretaClient(instituteCode: instituteCode);
+      _client!.onTokenRefreshed = () async {
+        await _saveAuth();
+      };
       
-      final url = 'https://idp.e-kreta.hu/connect/authorize?prompt=login&nonce=wylCrqT4oN6PPgQn2yQB0euKei9nJeZ6_ffJ-VpSKZU&response_type=code&code_challenge_method=S256&scope=openid%20email%20offline_access%20kreta-ellenorzo-webapi.public%20kreta-eugyintezes-webapi.public%20kreta-fileservice-webapi.public%20kreta-mobile-global-webapi.public%20kreta-dkt-webapi.public%20kreta-ier-webapi.public&code_challenge=HByZRRnPGb-Ko_wTI7ibIba1HQ6lor0ws4bcgReuYSQ&redirect_uri=https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect&client_id=kreta-ellenorzo-student-mobile-ios&state=folio_student_mobile&acr_values=institute_code:${_client!.instituteCode}';
-      
-      print('\nHa a böngésző nem nyílna meg automatikusan, nyisd meg az alábbi linket (Ctrl+Kattintás):');
-      print(url);
-      
-      print('\nMegnyitom a böngészőt a bejelentkezéshez...');
-      try {
-        if (Platform.isWindows) {
-          Process.run('explorer', [url]);
-        } else if (Platform.isLinux) {
-          Process.run('xdg-open', [url]);
-        } else if (Platform.isMacOS) {
-          Process.run('open', [url]);
-        }
-      } catch (e) {
-        print('\nNem sikerült automatikusan megnyitni a böngészőt. Kérlek másold be ezt a linket:');
+      final authMethod = Select(
+        prompt: 'Válassz bejelentkezési módszert',
+        options: ['CLI Automatikus bejelentkezés (Ajánlott)', 'Webes bejelentkezés (Böngészőn keresztül)'],
+      ).interact();
+
+      bool success = false;
+
+      if (authMethod == 1) {
+        final url = 'https://idp.e-kreta.hu/connect/authorize?prompt=login&nonce=wylCrqT4oN6PPgQn2yQB0euKei9nJeZ6_ffJ-VpSKZU&response_type=code&code_challenge_method=S256&scope=openid%20email%20offline_access%20kreta-ellenorzo-webapi.public%20kreta-eugyintezes-webapi.public%20kreta-fileservice-webapi.public%20kreta-mobile-global-webapi.public%20kreta-dkt-webapi.public%20kreta-ier-webapi.public&code_challenge=HByZRRnPGb-Ko_wTI7ibIba1HQ6lor0ws4bcgReuYSQ&redirect_uri=https://mobil.e-kreta.hu/ellenorzo-student/prod/oauthredirect&client_id=kreta-ellenorzo-student-mobile-ios&state=folio_student_mobile&acr_values=institute_code:${_client!.instituteCode}';
+        
+        print('\nHa a böngésző nem nyílna meg automatikusan, nyisd meg az alábbi linket (Ctrl+Kattintás):');
         print(url);
-      }
-      
-      print('\nJelentkezz be, majd amikor egy "Nem található" vagy "mobil.e-kreta.hu" kezdetű oldalra dob,');
-      print('KERESD MEG A CÍMSORBAN A "code=" RÉSZT, ÉS MÁSOLD KI CSAK AZ UTÁNA LÉVŐ KÓDOT!');
-      print('(Például: 14EC942D... a következő & jelig)');
-      
-      String pastedCode = '';
-      while (pastedCode.isEmpty) {
-        if (Platform.isWindows) {
-          pastedCode = Input(prompt: 'Ide másold be a kódot (vagy a teljes linket)').interact().trim();
-        } else {
-          stdout.write('Ide másold be a kódot (vagy a teljes linket): ');
-          pastedCode = stdin.readLineSync()?.trim() ?? '';
+        
+        print('\nMegnyitom a böngészőt a bejelentkezéshez...');
+        try {
+          if (Platform.isWindows) {
+            Process.run('explorer', [url]);
+          } else if (Platform.isLinux) {
+            Process.run('xdg-open', [url]);
+          } else if (Platform.isMacOS) {
+            Process.run('open', [url]);
+          }
+        } catch (e) {
+          print('\nNem sikerült automatikusan megnyitni a böngészőt. Kérlek másold be ezt a linket:');
+          print(url);
         }
         
-        if (pastedCode.isEmpty || pastedCode == 'P') {
-          pastedCode = '';
+        print('\nJelentkezz be, majd amikor egy "Nem található" vagy "mobil.e-kreta.hu" kezdetű oldalra dob,');
+        print('KERESD MEG A CÍMSORBAN A "code=" RÉSZT, ÉS MÁSOLD KI CSAK AZ UTÁNA LÉVŐ KÓDOT!');
+        print('(Például: 14EC942D... a következő & jelig)');
+        
+        String pastedCode = '';
+        while (pastedCode.isEmpty) {
+          if (Platform.isWindows) {
+            pastedCode = Utf8Input(prompt: 'Ide másold be a kódot (vagy a teljes linket)').interact().trim();
+          } else {
+            stdout.write('Ide másold be a kódot (vagy a teljes linket): ');
+            pastedCode = stdin.readLineSync()?.trim() ?? '';
+          }
+          
+          if (pastedCode.isEmpty || pastedCode == 'P') {
+            pastedCode = '';
+          }
         }
-      }
-      
-      print('\nBelépés folyamatban a kóddal...');
-      bool success = false;
-      if (pastedCode.startsWith('http')) {
-        success = await _client!.webLogin(pastedCode);
+        
+        print('\nBelépés folyamatban a kóddal...');
+        if (pastedCode.startsWith('http')) {
+          success = await _client!.webLogin(pastedCode);
+        } else {
+          // Construct a dummy URL with the code so webLogin can parse it normally
+          success = await _client!.webLogin('https://mobil.e-kreta.hu/oauthredirect?code=$pastedCode');
+        }
       } else {
-        // Construct a dummy URL with the code so webLogin can parse it normally
-        success = await _client!.webLogin('https://mobil.e-kreta.hu/oauthredirect?code=$pastedCode');
+        final username = Utf8Input(prompt: 'Felhasználónév (oktatási azonosító)').interact();
+        final password = Password(prompt: 'Jelszó (születési dátum vagy megadott jelszó)').interact();
+  
+        if (username.isEmpty || password.isEmpty) {
+          print('Hiba: Minden mezőt ki kell tölteni!');
+          return;
+        }
+  
+        print('\nBelépés folyamatban...');
+        success = await _client!.login(username, password);
       }
   
       if (!success) {

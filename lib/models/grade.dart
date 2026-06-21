@@ -21,9 +21,28 @@ class Grade {
     this.teacherName,
   });
 
+  Map<String, dynamic> toJson() => {
+    'subject': subject,
+    'subjectCategory': subjectCategory,
+    'numericValue': numericValue,
+    'textValue': textValue,
+    'weight': weight,
+    'date': date?.toIso8601String(),
+    'type': type,
+    'theme': theme,
+    'teacherName': teacherName,
+  };
+
   bool get isSummaryGrade {
     final t = type?.toLowerCase() ?? '';
-    return t.contains('vegi') || t.contains('felevevi') || t.contains('negyedevi');
+    return t.contains('év végi') || 
+           t.contains('félévi') || 
+           t.contains('negyedévi') || 
+           t.contains('háromnegyedévi') ||
+           t.contains('vegi') || 
+           t.contains('felevevi') || 
+           t.contains('negyedevi') || 
+           t.contains('osztályozó');
   }
 
   factory Grade.fromJson(Map<String, dynamic> json) {

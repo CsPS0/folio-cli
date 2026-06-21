@@ -6,15 +6,16 @@
 A Folio CLI egy parancssoros alkalmazás a Kréta e-napló rendszerhez. Az iOS alkalmazás OAuth2 hitelesítési folyamatait szimulálva közvetlen terminálos elérést biztosít a diákok adatlapjához és jegyeihez. A projekt a Folio ökoszisztéma hivatalos parancssoros eszköze.
 
 ## Főbb funkciók
-- Intézménykereső név alapján.
-- Automatikus hitelesítés és lokális multi-profil kezelés.
-- Jegyek, órarend, mulasztások, vizsgák és üzenetek gyors lekérdezése ("Összes megtekintése" opcióval).
-- Célátlag kalkulátor a szükséges érdemjegyek kiszámításához.
-- Globális kereső funkció.
-- Naptár exportálása (.ics): Az elkövetkező két hét órarendjének és vizsgáinak kimentése importálható naptárfájlba.
-- Windows feladatütemező integráció (háttér-értesítések új jegyek esetén).
-- Automatikus frissítés-ellenőrzés a legújabb GitHub verziókhoz.
-- Teljesen önálló futtatható állomány (`.exe`), használatához nincs szükség a Dart SDK telepítésére.
+- **Élő Dashboard (TUI parancs)**: Parancssoros főoldal automatikus frissítéssel, folyamatban lévő óra hátralévő idejének számlálójával és karbantartási riasztásokkal.
+- **Folio Wrapped**: Spotify-stílusú interaktív éves statisztikai összefoglaló (legszorgalmasabb nap, tanári rangsor, késések összesítése, üzenetek statisztikája).
+- **Bizonyítvány Tervező & Szellem Jegyek**: Célátlag kalkulátor és hipotetikus jegy szimulátor a tantárgyankénti átlagok javításához.
+- **Tantárgyi és Osztályátlagok Részletesen**: Saját átlagod összevetése az osztályátlaggal, eltérések, trendek (↗ / ↘) és jegy-határhelyzet figyelmeztetések.
+- **Jegy-trendek & Eloszlás Dashboard**: Dinamikus y-tengelyű éves kumulatív átlagvonal-grafikon és színes érdemjegy eloszlási hisztogram.
+- **Globális Haladó Kereső**: Ékezet-érzéketlen keresés a jegyekben, házi feladatokban, órarendben, vizsgákban, üzenetekben és hiányzásokban.
+- **Téma Választó & ASCII Banner**: Támogatja a Classic Blue, Neon Matrix (Zöld), Midnight Pink, és Classic Amber témákat testreszabható ASCII főmenü bannerrel.
+- **ICS Naptár, CSV és Git Export**: Órarend és jegytörténet mentése standard formátumokba vagy helyi Git repóba.
+- **Automatikus OAuth2 Token Frissítés**: Megbízható háttér-hitelesítés párhuzamos API hívások és token lejárás esetén is (fájlkorrupció-elleni védelemmel).
+- **Windows UTF-8 & FFI Konzol Mód**: Kényszerített UTF-8 kódolás (`chcp 65001`) az ékezetes karakterek hibátlan megjelenítéséhez és FFI alapú billentyűzet-echo helyreállítás.
 
 ## Telepítés
 
@@ -101,8 +102,10 @@ Ha valamelyik fenti csomagkezelővel telepítetted, az alkalmazást bárhonnan i
 ```bash
 folio-cli
 ```
-Gyors belépéshez és démon futtatáshoz támogatott argumentumok:
-`folio-cli -i <intezmenykod> -u <felhasznalonev> -p <jelszo>` vagy `folio-cli --daemon`
+**Gyors parancsok és argumentumok:**
+- `folio-cli dash` : Azonnali belépés az Élő Dashboard (TUI) nézetbe.
+- `folio-cli --daemon` : Háttérfolyamat indítása az értesítésekhez.
+- `folio-cli -i <intezmenykod> -u <felhasznalonev> -p <jelszo>` : Gyors belépés paraméterekkel.
 
 ## Dokumentáció
 - [USER.md](docs/USER.md): Felhasználói útmutató.

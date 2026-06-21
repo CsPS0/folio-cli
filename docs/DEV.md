@@ -12,12 +12,19 @@ Kiemelt függőségek:
 4. args: Parancssori argumentumok feldolgozása.
 
 Fő modulok:
-- **api/client.dart**: Hálózati réteg és OAuth2 token menedzsment. Erősen típusos objektumokkal tér vissza a JSON map-ek helyett.
-- **models/**: Típusbiztos model osztályok (Grade, Student, Absence, stb.) a Kréta API válaszok feldolgozására (`fromJson` factory-kkal). Null-safety garanciák, valamint az API által visszaadott UTC dátumok lokális időzónára konvertálása (`.toLocal()`).
-- **app/state/app_state.dart**: Singleton objektum a `~/.config/folio/` (vagy Windows-on `C:\Users\User\.config\folio\`) mappában lévő `state.json` és `auth.json` konfigurációk központosított kezelésére (automatikus migrációval a régebbi `.folio_*` fájlokról).
-- **app/cli_app.dart** (és **login_flow.dart**): UI vezérlés, lekérdező ciklusok, globális kereső, GitHub API alapú frissítés-ellenőrzés (`_checkForUpdates`) és a Windows háttérfolyamat (Démon) kezelése. A beviteli (I/O) logikák operációs rendszer specifikusan lettek szétválasztva a "Bracketed Paste" hibák és a Windows terminál fagyások elkerülése végett (pl. `stdin` macOS/Linuxon, `interact` csomag Windows-on).
-- **utils/chart_generator.dart**: ANSI alapú, terminál-szélességre skálázódó oszlopdiagram generátor az átlagokhoz.
-- **utils/ics_exporter.dart**: RFC 5545 iCalendar kompatibilis naptárexportáló, ami immár erős típusú modellekkel dolgozik.
+- **api/client.dart**: Hálózati réteg és OAuth2 token menedzsment. A token-frissítések (`refreshAccessToken`) aszinkron zárolással (`_activeRefreshFuture`) vannak ellátva, így elkerülhetők a párhuzamos API-hívások során fellépő `auth.json` fájl-íródási race-condition hibák és titkosítási korrupciók.
+- **models/**: Típusbiztos model osztályok (Grade, Student, Absence, TimetableEntry, stb.) a Kréta API válaszok feldolgozására. Az UTC dátumokat azonnal helyi időzónába konvertálják. A `isSummaryGrade` metódus ékezet-érzékeny és ékezet-mentes szűréssel is kiszűri a félévi/év végi összefoglaló értékeléseket.
+- **app/state/app_state.dart**: Singleton a helyi konfigurációk (`state.json` és titkosított `auth.json`) kezelésére, a választott témák és az ASCII banner beállítások perzisztálására.
+- **app/theme.dart**: A parancssor globális témasémáit és színkódjait (szövegek, menü jelölők, gombok, grafikonok) vezérlő modul.
+- **app/views/**:
+  - **dashboard_view.dart**: Aszinkron billentyűzet-olvasó eseményhurok és órarendi óra-visszaszámláló widget. A főmenüből külön alfolyamatként (subprocess) indul, ami izolálja az aszinkron `stdin` folyamatot a főprogram konzol-leíróitól.
+  - **wrapped_view.dart**: Spotify-Wrapped stílusú statisztikákat (késések, tanári eloszlás, legszorgalmasabb nap, üzenetek) vizualizáló slides.
+  - **absences_view.dart**: Veszélyzóna kalkulátor, osztályátlag és eltérés-táblázat, valamint a heti kumulatív jegy-trendek dashboardja.
+  - **grades_view.dart**: Szellem jegyek kalkulátor, jegy heatmap és a globális ékezet-érzéketlen keresőmotor.
+- **app/components/utf8_input.dart**: Egyéni parancssoros beviteli wrapper, amely garantálja az echo (karakter-megjelenítés) helyes állapotát a Windows konzolon.
+- **utils/win32_console.dart**: Windows-specifikus Win32 API FFI hívásokat tartalmazó segédfájl. A `forceRestoreConsoleMode()` közvetlen kernel-szintű konzol módosításokkal állítja vissza a billentyűzet-echo-t (`ENABLE_ECHO_INPUT`) és letiltja a `0x0200` (virtual terminal input) módot a backspace-törlés helyes működéséhez.
+- **utils/chart_generator.dart**: ANSI alapú terminál grafikon-generátor. A `generateLineChart` dinamikus y-tengely skálázást végez az input adathatárvonalak alapján, így kiküszöböli a lapos GPA grafikonokat.
+- **utils/ics_exporter.dart**: RFC 5545 iCalendar kompatibilis naptárexportáló.
 
 ## Tesztelés
 A fejlesztés során az alábbi ellenőrzéseket javasolt lefolytatni minden commit előtt:

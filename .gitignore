@@ -23,3 +23,15 @@ scratch/
 
 docs/PUBLISHING_GUIDE.md
 private.key
+
+# Agent Files
+.agents/
+.serena/
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+
+# Test / Scratch files
+bin/test_*.dart
+fix_encoding.dart
+student_data_search.txt

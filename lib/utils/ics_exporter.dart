@@ -1,6 +1,10 @@
 import '../models/models.dart';
 
 class IcsExporter {
+  static String exportTimetable(List<TimetableEntry> timetable) {
+    return generate(timetable, []);
+  }
+
   static String generate(List<TimetableEntry> timetable, List<Exam> exams) {
     final buffer = StringBuffer();
     buffer.writeln('BEGIN:VCALENDAR');

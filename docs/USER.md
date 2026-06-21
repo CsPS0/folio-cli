@@ -6,17 +6,19 @@ A Folio CLI egy parancssoros Kréta e-napló kliens. Ez a dokumentum a főbb fun
 Az első indításkor meg kell adni az intézmény kódját (pl. `bmszc-neumann`). Ha nem tudod a kódot, használd a beépített keresőt az iskola neve alapján.
 A bejelentkezéshez az oktatási azonosítóra és a jelszóra (általában a születési dátum: ÉÉÉÉ-HH-NN) van szükség. Sikeres belépés után a profil menthető, így a továbbiakban a bejelentkezés automatikus.
 
-## 2. Főmenü Funkciók
-- Tanulói adatlap: Személyes adatok és Célátlag kalkulátor.
-- Legutóbbi jegyek: A legfrissebb érdemjegyek listája színkódolt értékekkel.
-- Órarend: Dinamikus, táblázatos nézet az e heti és jövő heti órákról.
-- Mulasztások: Igazolt, igazolandó és igazolatlan hiányzások, valamint késések színkódolt nézete.
-- Tantárgyi átlagok: Színkódolt oszlopdiagram.
-- Számonkérések & Házi feladatok: Vizsgák és beadandók határidőkkel.
-- Üzenetek: A Kréta üzenőfal elérése.
+## 2. Főmenü Funkciók és Kimutatások
+- **Élő Dashboard**: Azonnali visszaszámlálás az óra végéig, óraközi szünetek ideje, mai órarend és rendszer-karbantartási figyelmeztetések. 30 másodpercenként automatikusan frissül.
+- **Legutóbbi jegyek**: Legfrissebb érdemjegyek, amelyek mellett elérhető a **Szellem Jegyek** szimulátor és a **Heti Heatmap** (átlag alakulása heti bontásban).
+- **Órarend**: Dinamikus táblázatos órarend, amely jelzi az elmaradt órákat, a helyettesítéseket (tanárnévvel), dolgozatokat és a saját mulasztásaidat is.
+- **Mulasztások**: Igazolt, igazolandó, igazolatlan órák és késések listája, valamint a 250 órás határt mérő **Veszélyzóna Kalkulátor**.
+- **Tantárgyi átlagok**: Áttekinthető táblázat a saját átlagaidról, az osztályátlagokról, az eltérésekről és az átlag-trendekről (↗ / ↘), valamint a jegy-határhelyzet figyelmeztetésekről (pl. *Veszélyben a 4-es!*).
+- **Jegy-trendek**: Heti bontású grafikon az éves átlagod alakulásáról (dinamikusan skálázott y-tengellyel), részletes statisztikákkal (legjobb/leggyengébb hónap) és az érdemjegyek eloszlási bar chartjával.
+- **Számonkérések & Házi feladatok**: Dolgozatok és feladatok leírásokkal és határidőkkel, valamint a csatolt fájlok letöltésének lehetőségével.
+- **Üzenetek**: Parancssoros üzenőfal a beérkezett üzenetek elolvasásához és mellékleteik letöltéséhez.
+- **Haladó Kereső**: Ékezet-érzéketlen keresőmotor, amellyel a napló teljes tartalmában (jegyek, órák, házi feladatok, üzenetek, hiányzások) kereshetsz, és megnyithatod a részleteket.
+- **Folio Wrapped**: Spotify-style éves diákstatisztika, amely bemutatja a legtöbb jegyet adó tanárodat, legszorgalmasabb napodat, késéseid összesített perceit és az üzenetküldő bajnokodat.
 
-Minden listanézetnél elérhető az "Összes megtekintése" opció a régebbi bejegyzések betöltéséhez.
-- Keresés: Globális kereső a napló teljes tartalmában.
+Minden listanézetnél és az üzeneteknél is elérhető az arrow-key alapú lapozás (Bal/Jobb nyilak).
 
 ## 3. Haladó Funkciók és Beállítások
 A főmenü "Beállítások" opciójában az alábbi funkciók érhetők el:

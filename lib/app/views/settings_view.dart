@@ -2,22 +2,67 @@ part of '../cli_app.dart';
 
 extension FolioCliAppSettingsView on FolioCliApp {
   Future<void> _showSettings() async {
+      int _lastSettingsMenuIndex = 0;
       while (true) {
-        final action = Select(
+        _clearScreen();
+        _showMainMenuBanner();
+        final layout = [
+          {'type': 'separator', 'label': '------------------'},
+          {'type': 'action', 'id': 0, 'label': 'Profilváltás'},
+          {'type': 'action', 'id': 1, 'label': 'Új fiók hozzáadása'},
+          {'type': 'action', 'id': 6, 'label': 'Összes mentett adat törlése (Kijelentkezés)'},
+          {'type': 'separator', 'label': '------------------'},
+          {'type': 'action', 'id': 3, 'label': 'Főmenü testreszabása'},
+          {'type': 'action', 'id': -2, 'label': 'Tanár/Tantárgy átnevezése (Aliasok)'},
+          {'type': 'action', 'id': -4, 'label': 'Színséma / Téma választása'},
+          {'type': 'action', 'id': -5, 'label': 'Főmenü ASCII Banner ki/be'},
+          {'type': 'separator', 'label': '------------------'},
+          {'type': 'action', 'id': 4, 'label': 'Naptár exportálása (.ics)'},
+          {'type': 'action', 'id': 5, 'label': 'Adatok exportálása (CSV)'},
+          {'type': 'action', 'id': -3, 'label': 'Git-alapú Jegy-történet (Export & Git)'},
+          {'type': 'separator', 'label': '------------------'},
+          {'type': 'action', 'id': 2, 'label': 'Háttér-értesítések beállítása'},
+          {'type': 'action', 'id': -6, 'label': 'Speciális'},
+          {'type': 'separator', 'label': '------------------'},
+          {'type': 'action', 'id': 7, 'label': 'Vissza'},
+        ];
+
+        List<String> options = [];
+        List<int> actionIds = [];
+        List<int> unselectable = [];
+
+        for (int i = 0; i < layout.length; i++) {
+          final item = layout[i];
+          options.add(item['label'] as String);
+          if (item['type'] == 'separator') {
+            actionIds.add(-1);
+            unselectable.add(i);
+          } else {
+            actionIds.add(item['id'] as int);
+          }
+        }
+
+        if (_lastSettingsMenuIndex >= options.length) {
+          _lastSettingsMenuIndex = 0;
+        }
+
+        final selection = CustomMenu(
           prompt: 'Beállítások',
-          options: [
-            'Profilváltás',
-            'Új fiók hozzáadása',
-            'Háttér-értesítések beállítása',
-            'Főmenü testreszabása',
-            'Naptár exportálása (.ics)',
-            'Adatok exportálása (CSV)',
-            'Összes mentett adat törlése (Kijelentkezés)', 
-            'Vissza'
-          ],
+          options: options,
+          unselectableIndices: unselectable,
+          initialIndex: _lastSettingsMenuIndex,
         ).interact();
   
+        _lastSettingsMenuIndex = selection;
+  
+        final action = actionIds[selection];
+
         if (action == 7) return;
+        
+        if (action == 6) {
+          final confirm = Confirm(prompt: 'Biztosan törölni szeretnéd az összes mentett adatot?', defaultValue: false).interact();
+          if (!confirm) continue;
+        }
   
         if (action == 0) {
           final authFile = _getAuthFile();
@@ -68,16 +113,18 @@ extension FolioCliAppSettingsView on FolioCliApp {
           _setupDaemon(enable);
         } else if (action == 3) {
           _clearScreen();
-          final allOptions = [
-            'Tanulói adatlap',
-            'Legutóbbi jegyek',
-            'Órarend (Ezen a héten)',
-            'Mulasztások',
-            'Tantárgyi átlagok',
-            'Számonkérések',
-            'Házi feladatok',
-            'Üzenetek',
-            'Keresés'
+          final customizableOptions = [
+            {'id': 10, 'label': 'Folio Wrapped (Év végi összefoglaló)'},
+            {'id': 0, 'label': 'Tanulói adatlap'},
+            {'id': 2, 'label': 'Órarend'},
+            {'id': 1, 'label': 'Legutóbbi jegyek'},
+            {'id': 4, 'label': 'Tantárgyi átlagok'},
+            {'id': 3, 'label': 'Mulasztások'},
+            {'id': 5, 'label': 'Számonkérések'},
+            {'id': 6, 'label': 'Házi feladatok'},
+            {'id': 7, 'label': 'Üzenetek'},
+            {'id': 8, 'label': 'Keresés'},
+            {'id': -2, 'label': 'Dashboard (Élő nézet)'},
           ];
           
           final stateFile = AppState.instance.stateFile;
@@ -89,22 +136,25 @@ extension FolioCliAppSettingsView on FolioCliApp {
               if (state['hiddenMenuItems'] != null) {
                 hiddenItems = state['hiddenMenuItems'];
               }
-            } catch (_) {}
+            } catch (e) {
+              FolioLogger.debug('Failed to parse settings state file: $e');
+            }
           }
           
-          final defaults = List.generate(allOptions.length, (i) => !hiddenItems.contains(i));
+          final optionLabels = customizableOptions.map((e) => e['label'] as String).toList();
+          final defaults = customizableOptions.map((e) => !hiddenItems.contains(e['id'])).toList();
           
           print('\n\x1B[38;5;208mHasználd a SPACE-t a ki/bekapcsoláshoz, majd nyomj ENTER-t a mentéshez!\x1B[0m\n');
           final selection = MultiSelect(
             prompt: 'Válaszd ki a látható menüpontokat',
-            options: allOptions,
+            options: optionLabels,
             defaults: defaults,
           ).interact();
           
           final newHiddenItems = [];
-          for (int i = 0; i < allOptions.length; i++) {
+          for (int i = 0; i < customizableOptions.length; i++) {
             if (!selection.contains(i)) {
-              newHiddenItems.add(i);
+              newHiddenItems.add(customizableOptions[i]['id']);
             }
           }
           
@@ -112,7 +162,7 @@ extension FolioCliAppSettingsView on FolioCliApp {
           stateFile.writeAsStringSync(jsonEncode(state));
           
           print('\nFőmenü sikeresen testreszabva!');
-          Input(prompt: 'Nyomj Enter-t a folytatáshoz...').interact();
+          Utf8Input(prompt: 'Nyomj Enter-t a folytatáshoz...').interact();
           _clearScreen();
           
         } else if (action == 4) {
@@ -122,6 +172,47 @@ extension FolioCliAppSettingsView on FolioCliApp {
         } else if (action == 5) {
           _clearScreen();
           await _exportToCsv();
+          _clearScreen();
+        } else if (action == -2) {
+          _clearScreen();
+          await _manageAliases();
+          _clearScreen();
+        } else if (action == -3) {
+          _clearScreen();
+          await _exportToGit();
+          _clearScreen();
+        } else if (action == -4) {
+          _clearScreen();
+          print('\n--- Színséma / Téma választása ---');
+          final themes = ['Classic Blue (Cian)', 'Neon Matrix (Zöld)', 'Midnight Pink (Rózsaszín/Lila)', 'Classic Amber (Narancs)'];
+          final themeValues = ['blue', 'green', 'pink', 'orange'];
+          
+          final currentIdx = themeValues.indexOf(AppState.instance.theme);
+          final choice = Select(
+            prompt: 'Válassz egy témát (Jelenlegi: ${themes[currentIdx >= 0 ? currentIdx : 0]}):',
+            options: [...themes, 'Mégse'],
+          ).interact();
+          
+          if (choice < themes.length) {
+            AppState.instance.setTheme(themeValues[choice]);
+            FolioTheme.configureInteractTheme();
+            print('\nTéma sikeresen átállítva!');
+            _pause();
+          }
+          _clearScreen();
+        } else if (action == -5) {
+          final currentVal = AppState.instance.showAsciiBanner;
+          final newVal = Confirm(
+            prompt: 'Szeretnéd megjeleníteni az ASCII Art bannert a főmenüben?',
+            defaultValue: currentVal,
+          ).interact();
+          AppState.instance.setShowAsciiBanner(newVal);
+          print('\nASCII Art banner sikeresen ${newVal ? "BEKAPCSOLVA" : "KIKAPCSOLVA"}!');
+          _pause();
+          _clearScreen();
+        } else if (action == -6) {
+          _clearScreen();
+          await _showSpecialSettings();
           _clearScreen();
         } else if (action == 6) {
           final confirm = Confirm(
@@ -144,39 +235,117 @@ extension FolioCliAppSettingsView on FolioCliApp {
       }
     }
 
-  void _setupDaemon(bool enable) {
-      if (!Platform.isWindows) return;
-      final taskName = "FolioCliDaemon";
-      if (enable) {
-        final exePath = Platform.resolvedExecutable;
-        final scriptPath = Platform.script.toFilePath();
-        
-        String command;
-        if (scriptPath.endsWith('.dart')) {
-          command = '""$exePath"" run ""$scriptPath"" --daemon';
+  Future<void> _showSpecialSettings() async {
+    while (true) {
+      _clearScreen();
+      _showMainMenuBanner();
+      print('\n--- Speciális Beállítások ---');
+      print('Jelenlegi verzió: \x1B[1;36m$appVersion\x1B[0m\n');
+
+      final layout = [
+        {'type': 'action', 'id': 0, 'label': 'Frissítések keresése'},
+        {'type': 'action', 'id': 1, 'label': 'Vissza'},
+      ];
+
+      List<String> options = [];
+      List<int> actionIds = [];
+      List<int> unselectable = [];
+
+      for (int i = 0; i < layout.length; i++) {
+        final item = layout[i];
+        options.add(item['label'] as String);
+        if (item['type'] == 'separator') {
+          actionIds.add(-1);
+          unselectable.add(i);
         } else {
-          command = '""$exePath"" --daemon';
+          actionIds.add(item['id'] as int);
+        }
+      }
+
+      final selection = CustomMenu(
+        prompt: 'Speciális',
+        options: options,
+        unselectableIndices: unselectable,
+        initialIndex: 0,
+      ).interact();
+
+      final action = actionIds[selection];
+
+      if (action == 1) return;
+
+      if (action == 0) {
+        _clearScreen();
+        _showMainMenuBanner();
+        print('\n--- Frissítések Keresése ---');
+        print('Keresés a GitHub kiadások között...');
+        
+        try {
+          final res = await http.get(
+            Uri.parse('https://api.github.com/repos/CsPS0/folio-cli/releases/latest'),
+          ).timeout(Duration(seconds: 4));
+          
+          if (res.statusCode == 200) {
+            final data = jsonDecode(res.body);
+            final latestVersion = data['tag_name'] as String?;
+            final currentVersion = appVersion;
+            
+            if (latestVersion != null && latestVersion != currentVersion && latestVersion.startsWith('v')) {
+              print('\x1B[33m\n[!] Új Folio CLI verzió érhető el: $latestVersion (Jelenlegi: $currentVersion)\x1B[0m\n');
+              print('Frissítési parancsok:');
+              print('  - Windows (Scoop):     \x1B[1;36mscoop update folio-cli\x1B[0m');
+              print('  - Linux (APT):         \x1B[1;36msudo apt update && sudo apt install folio-cli\x1B[0m');
+              print('  - macOS (Homebrew):    \x1B[1;36mbrew upgrade folio-cli\x1B[0m');
+              print('  - Manuális szkript:    \x1B[1;36mcurl -fsSL https://raw.githubusercontent.com/CsPS0/folio-cli/main/install.sh | bash\x1B[0m\n');
+            } else {
+              print('\n\x1B[32m[✓] A legfrissebb verziót használod (Verzió: $currentVersion)\x1B[0m\n');
+            }
+          } else {
+            print('\nHiba: Nem sikerült lekérdezni a verzióinformációkat a GitHubról (Szerver válaszkód: ${res.statusCode}).');
+          }
+        } catch (e) {
+          print('\nHiba történt a frissítés ellenőrzése során: $e');
         }
         
-        final vbsPath = '${AppState.instance.configDir}\\daemon.vbs';
-        final vbsFile = File(vbsPath);
-        
-        vbsFile.writeAsStringSync('Set WshShell = CreateObject("WScript.Shell")\nWshShell.Run "$command", 0\nSet WshShell = Nothing');
-  
-        Process.runSync('schtasks', [
-          '/Create', '/F',
-          '/TN', taskName,
-          '/TR', 'wscript.exe "$vbsPath"',
-          '/SC', 'ONLOGON'
-        ]);
-        print('Értesítések BEKAPCSOLVA (Láthatatlan háttérfolyamat indításkor).\n');
-      } else {
-        Process.runSync('schtasks', [
-          '/Delete', '/F',
-          '/TN', taskName
-        ]);
-        print('Értesítések KIKAPCSOLVA.\n');
+        _pause();
       }
     }
+  }
 
+  Future<void> _manageAliases() async {
+    while (true) {
+      _clearScreen();
+      _showMainMenuBanner();
+      final aliases = AppState.instance.getAliases();
+      List<String> options = [];
+      List<String> keys = [];
+      
+      options.add('Új alias hozzáadása');
+      keys.add('');
+
+      for (var entry in aliases.entries) {
+        options.add('${entry.key} -> ${entry.value}');
+        keys.add(entry.key);
+      }
+      options.add('Vissza');
+
+      final choice = Select(prompt: 'Tanár/Tantárgy átnevezése (Aliasok)', options: options).interact();
+      
+      if (choice == options.length - 1) return;
+
+      if (choice == 0) {
+        final original = Utf8Input(prompt: 'Eredeti név (pontosan!):').interact();
+        if (original.isEmpty) continue;
+        final alias = Utf8Input(prompt: 'Új név (Alias):').interact();
+        if (alias.isNotEmpty) {
+          AppState.instance.setAlias(original, alias);
+        }
+      } else {
+        final keyToRemove = keys[choice];
+        final confirm = Confirm(prompt: 'Törölni szeretnéd az aliast: $keyToRemove?', defaultValue: false).interact();
+        if (confirm) {
+          AppState.instance.removeAlias(keyToRemove);
+        }
+      }
+    }
+  }
 }

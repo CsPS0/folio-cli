@@ -1,10 +1,12 @@
 class Homework {
+  final String? uid;
   final String subject;
   final String text;
   final DateTime? assignedDate;
   final DateTime? deadline;
 
   const Homework({
+    this.uid,
     required this.subject,
     required this.text,
     this.assignedDate,
@@ -23,6 +25,7 @@ class Homework {
     parsedText = parsedText.replaceAll(RegExp(r'<[^>]*>|&[^;]+;'), ' ');
 
     return Homework(
+      uid: json['Uid']?.toString(),
       subject: parsedSubject,
       text: parsedText,
       assignedDate: json['RogzitesIdopontja'] != null ? DateTime.tryParse(json['RogzitesIdopontja'])?.toLocal() : null,

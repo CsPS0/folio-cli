@@ -3,12 +3,14 @@ class Absence {
   final DateTime? date;
   final String status;
   final String? type;
+  final int? delayMinutes;
 
   const Absence({
     required this.subject,
     this.date,
     required this.status,
     this.type,
+    this.delayMinutes,
   });
 
   factory Absence.fromJson(Map<String, dynamic> json) {
@@ -17,6 +19,7 @@ class Absence {
       date: json['Datum'] != null ? DateTime.tryParse(json['Datum'])?.toLocal() : null,
       status: json['IgazolasAllapota'] ?? 'Ismeretlen',
       type: json['Tipus']?['Nev'],
+      delayMinutes: json['KesesIdotartama'] as int?,
     );
   }
 }

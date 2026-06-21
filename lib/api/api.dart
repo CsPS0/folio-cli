@@ -121,4 +121,5 @@ class KretaApiEndpoints {
     static const homework = "/ellenorzo/V3/Sajat/HaziFeladatok";
     static const capabilities = "/ellenorzo/V3/Sajat/Intezmenyek";
     static const messages = "/api/v1/kommunikacio/postaladaelemek/sajat";
+    static String message(int id) => "/api/v1/kommunikacio/postaladaelemek/$id";
 }

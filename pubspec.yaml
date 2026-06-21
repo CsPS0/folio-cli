@@ -1,6 +1,6 @@
 name: folio_cli
 description: A console application for the Kreta API.
-version: 1.1.1
+version: 1.2.0
 # homepage: https://www.example.com
 
 environment:
@@ -12,6 +12,8 @@ dependencies:
   interact: ^2.1.1
   args: ^2.7.0
   encrypt: ^5.0.3
+  dart_console: ^1.0.0
+  path: ^1.9.1
 
 dev_dependencies:
   lints: ^3.0.0

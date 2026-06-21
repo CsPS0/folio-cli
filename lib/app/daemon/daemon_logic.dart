@@ -9,7 +9,7 @@ extension FolioCliAppDaemonLogic on FolioCliApp {
       if (grades != null) {
         if (grades.length > oldGradesCount && oldGradesCount > 0) {
           final newGradesCount = grades.length - oldGradesCount;
-          await _showWindowsToast('Folio (Kréta)', 'Kaptál $newGradesCount új jegyet!');
+          await _showToast('Folio (Kréta)', 'Kaptál $newGradesCount új jegyet!');
         }
         final currentData = state.getAuthData();
         currentData['gradesCount'] = grades.length;
@@ -21,7 +21,7 @@ extension FolioCliAppDaemonLogic on FolioCliApp {
       if (homeworks != null) {
         if (homeworks.length > oldHwCount && oldHwCount > 0) {
           final newHwCount = homeworks.length - oldHwCount;
-          await _showWindowsToast('Folio (Kréta)', 'Kaptál $newHwCount új házi feladatot!');
+          await _showToast('Folio (Kréta)', 'Kaptál $newHwCount új házi feladatot!');
         }
         final currentData = state.getAuthData();
         currentData['homeworkCount'] = homeworks.length;
@@ -36,20 +36,19 @@ extension FolioCliAppDaemonLogic on FolioCliApp {
         for (var exam in exams) {
           final examDateStr = exam.date?.toString().split(' ').first;
           if (examDateStr == tomorrowStr) {
-            await _showWindowsToast('Folio (Kréta)', 'Holnap dolgozat: ${exam.subject} (${exam.mode})');
+            await _showToast('Folio (Kréta)', 'Holnap dolgozat: ${exam.subject} (${exam.mode})');
             break;
           }
         }
       }
     }
 
-  Future<void> _showWindowsToast(String title, String message) async {
-      if (!Platform.isWindows) return;
+  Future<void> _showToast(String title, String message) async {
+      final safeTitle = title.replaceAll("'", "''").replaceAll('"', '\\"');
+      final safeMessage = message.replaceAll("'", "''").replaceAll('"', '\\"');
       
-      final safeTitle = title.replaceAll("'", "''");
-      final safeMessage = message.replaceAll("'", "''");
-      
-      final script = '''
+      if (Platform.isWindows) {
+        final script = '''
   [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > \$null
   \$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
   \$texts = \$template.GetElementsByTagName("text")
@@ -59,7 +58,46 @@ extension FolioCliAppDaemonLogic on FolioCliApp {
   \$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("FolioCLI")
   \$notifier.Show(\$toast)
   ''';
-      
-      await Process.run('powershell', ['-Command', script]);
+        await Process.run('powershell', ['-Command', script]);
+      } else if (Platform.isLinux) {
+        await Process.run('notify-send', [title, message]);
+      } else if (Platform.isMacOS) {
+        final script = 'display notification "$safeMessage" with title "$safeTitle"';
+        await Process.run('osascript', ['-e', script]);
+      }
     }
+
+  void _setupDaemon(bool enable) {
+    if (enable) {
+      installDaemon();
+    } else {
+      uninstallDaemon();
+    }
+  }
+
+  void installDaemon() {
+    if (!Platform.isWindows) return;
+    try {
+      final exePath = Platform.resolvedExecutable;
+      final script = '''
+\$action = New-ScheduledTaskAction -Execute "$exePath" -Argument "--daemon"
+\$trigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Minutes 60)
+Register-ScheduledTask -Action \$action -Trigger \$trigger -TaskName "FolioCLIDaemon" -Description "Folio CLI háttérfolyamat" -Force
+''';
+      Process.runSync('powershell', ['-Command', script]);
+      print('Háttérfolyamat sikeresen telepítve (óránként fut).');
+    } catch (e) {
+      print('Hiba a telepítés során: \$e');
+    }
+  }
+
+  void uninstallDaemon() {
+    if (!Platform.isWindows) return;
+    try {
+      Process.runSync('schtasks', ['/Delete', '/TN', 'FolioCLIDaemon', '/F']);
+      print('Háttérfolyamat eltávolítva.');
+    } catch (e) {
+      print('Hiba az eltávolítás során: \$e');
+    }
+  }
 }

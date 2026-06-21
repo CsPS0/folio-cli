@@ -1,9 +1,3 @@
-import 'dart:io';
-import 'dart:convert';
-import '../state/app_state.dart';
-import '../../utils/encryption.dart';
-import '../../api/client.dart';
-
 part of '../cli_app.dart';
 
 extension FolioCliAppAuthManager on FolioCliApp {

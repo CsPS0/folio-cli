@@ -1,15 +1,20 @@
 import 'dart:io';
 import 'dart:convert';
-import 'dart:isolate';
-import 'dart:math';
-import 'package:args/args.dart';
-import 'package:dart_console/dart_console.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:interact/interact.dart';
 import 'package:folio_cli/api/client.dart';
+import 'package:folio_cli/models/models.dart';
 import 'package:folio_cli/utils/chart_generator.dart';
 import 'package:folio_cli/utils/ics_exporter.dart';
 import 'package:folio_cli/utils/encryption.dart';
+import 'package:folio_cli/app/components/custom_menu.dart';
+import 'package:folio_cli/app/components/utf8_input.dart';
+import 'package:folio_cli/app/theme.dart';
+import 'package:folio_cli/utils/logger.dart';
+import 'package:folio_cli/utils/win32_console.dart';
+import 'package:folio_cli/version.dart';
+import 'package:path/path.dart' as p;
 import 'state/app_state.dart';
 
 part 'login/auth_manager.dart';
@@ -23,6 +28,8 @@ part 'views/timetable_view.dart';
 part 'views/absences_view.dart';
 part 'views/homework_messages_view.dart';
 part 'views/export_view.dart';
+part 'views/dashboard_view.dart';
+part 'views/wrapped_view.dart';
 
 class FolioCliApp {
   Future<bool> _ensureClientReady() async {
@@ -83,6 +90,9 @@ class FolioCliApp {
           _client = KretaClient(instituteCode: instituteCode);
           _client!.accessToken = accessToken;
           _client!.refreshToken = refreshToken;
+          _client!.onTokenRefreshed = () async {
+            await _saveAuth();
+          };
 
           var studentData = await _client!.getStudentData(silent: true);
           
@@ -103,8 +113,12 @@ class FolioCliApp {
           }
         }
       }
+    } on FormatException catch (_) {
+      print('\x1B[1;31mA titkosítási kulcs érvénytelen (valószínűleg megváltozott a számítógép neve). Kérlek, jelentkezz be újra!\x1B[0m\n');
+      if (authFile.existsSync()) authFile.deleteSync();
+      return false;
     } catch (e) {
-      // Ignore
+      // Ignore other errors like network timeouts on refresh
     }
     
     return false;
@@ -123,21 +137,40 @@ class FolioCliApp {
     _____     _ _       
    |  ___|__ | (_) ___  
    | |_ / _ \| | |/ _ \ 
-   |  _| (_) | | | (_) |
-   |_|  \___/|_|_|\___/ CLI v1.1.1
-    ''');
+   |  _| (_) | | | (_) |'''
+    '\n   |_|  \\___/|_|_|\\___/ CLI $appVersion\n');
     print('\x1B[0m');
   }
 
-  Future<void> runInteractive() async {
+  void _showMainMenuBanner() {
+    if (!AppState.instance.showAsciiBanner) return;
+    
+    final color = FolioTheme.primary;
+    print(color);
+    print(r'''
+███████╗ ██████╗ ██╗     ██╗ ██████╗ 
+██╔════╝██╔═══██╗██║     ██║██╔═══██╗
+█████╗  ██║   ██║██║     ██║██║   ██║
+██╔══╝  ██║   ██║██║     ██║██║   ██║
+██║     ╚██████╔╝███████╗██║╚██████╔╝
+╚═╝      ╚═════╝ ╚══════╝╚═╝ ╚═════╝ ''');
+    print(FolioTheme.reset);
+  }
+
+  Future<void> runInteractive({bool startInDashboard = false}) async {
     AppState.instance.migrateOldFiles();
+    FolioTheme.configureInteractTheme();
     _showBanner();
 
     print('Keresem a mentett bejelentkezést...');
     if (await _tryAutoLogin()) {
       print('Sikeres automatikus bejelentkezés!\n');
       await _checkForUpdates();
-      await _mainMenu();
+      if (startInDashboard) {
+        await _showDashboard();
+      } else {
+        await _mainMenu();
+      }
       return;
     }
 
@@ -160,7 +193,7 @@ class FolioCliApp {
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
         final latestVersion = data['tag_name'] as String?;
-        const currentVersion = 'v1.1.1'; // TODO: dinamikus verziószám
+        final currentVersion = appVersion;
         
         if (latestVersion != null && latestVersion != currentVersion && latestVersion.startsWith('v')) {
           print('\x1B[33m\n=============================================================');
@@ -173,27 +206,37 @@ class FolioCliApp {
           print('=============================================================\x1B[0m\n');
         }
       }
-    } catch (_) {
-      // Ignore network errors so it doesn't interrupt the app
+    } catch (e) {
+      FolioLogger.debug('Update check failed: $e');
     }
   }
 
-  Future<void> runWithCredentials(String instituteCode, String username, String password) async {
+  Future<void> runWithCredentials(String instituteCode, String username, String password, {bool startInDashboard = false}) async {
+    AppState.instance.migrateOldFiles();
+    FolioTheme.configureInteractTheme();
     _client = KretaClient(instituteCode: instituteCode);
-    print('Bejelentkezés CLI paraméterekkel...');
-    bool success = await _client!.login(username, password);
-    if (!success) {
-      print('Sikertelen bejelentkezés.');
+    _client!.onTokenRefreshed = () async {
+      await _saveAuth();
+    };
+    if (await _client!.login(username, password)) {
+      await _saveAuth();
+      await _checkForUpdates();
+      if (startInDashboard) {
+        await _showDashboard();
+      } else {
+        await _mainMenu();
+      }
+    } else {
+      print('Bejelentkezés sikertelen!');
       exit(1);
     }
-    print('Sikeres bejelentkezés!\n');
-    await _checkForUpdates();
-    await _mainMenu();
   }
 
   Future<void> _mainMenu() async {
-    _clearScreen();
+    int _lastMainMenuIndex = 0;
     while (true) {
+      _clearScreen();
+      _showMainMenuBanner();
       final stateFile = AppState.instance.stateFile;
       List<dynamic> hiddenItems = [];
       if (stateFile.existsSync()) {
@@ -202,40 +245,68 @@ class FolioCliApp {
           if (state['hiddenMenuItems'] != null) {
             hiddenItems = state['hiddenMenuItems'];
           }
-        } catch (_) {}
+        } catch (e) {
+          FolioLogger.debug('Failed to parse state file: $e');
+        }
       }
 
-      final allOptions = [
-        'Tanulói adatlap',
-        'Legutóbbi jegyek',
-        'Órarend (Ezen a héten)',
-        'Mulasztások',
-        'Tantárgyi átlagok',
-        'Számonkérések',
-        'Házi feladatok',
-        'Üzenetek',
-        'Keresés'
+      final layout = [
+        {'type': 'separator', 'label': '------------------'},
+        {'type': 'action', 'id': 10, 'label': 'Folio Wrapped (Év végi összefoglaló)'},
+        {'type': 'action', 'id': 0, 'label': 'Tanulói adatlap'},
+        {'type': 'action', 'id': 2, 'label': 'Órarend'},
+        {'type': 'separator', 'label': '------------------'},
+        {'type': 'action', 'id': 1, 'label': 'Legutóbbi jegyek'},
+        {'type': 'action', 'id': 4, 'label': 'Tantárgyi átlagok'},
+        {'type': 'separator', 'label': '------------------'},
+        {'type': 'action', 'id': 3, 'label': 'Mulasztások'},
+        {'type': 'action', 'id': 5, 'label': 'Számonkérések'},
+        {'type': 'action', 'id': 6, 'label': 'Házi feladatok'},
+        {'type': 'action', 'id': 7, 'label': 'Üzenetek'},
+        {'type': 'separator', 'label': '------------------'},
+        {'type': 'action', 'id': 8, 'label': 'Keresés'},
+        {'type': 'action', 'id': -2, 'label': 'Dashboard (Élő nézet)'},
+        {'type': 'action', 'id': 9, 'label': 'Beállítások'},
+        {'type': 'action', 'id': 100, 'label': 'Kilépés'},
       ];
 
       List<String> displayOptions = [];
       List<int> actionIds = [];
 
-      for (int i = 0; i < allOptions.length; i++) {
-        if (!hiddenItems.contains(i)) {
-          displayOptions.add(allOptions[i]);
-          actionIds.add(i);
+      for (var item in layout) {
+        if (item['type'] == 'separator') {
+          displayOptions.add(item['label'] as String);
+          actionIds.add(-1);
+        } else {
+          final id = item['id'] as int;
+          if (!hiddenItems.contains(id) || id == 9 || id == 100) {
+            displayOptions.add(item['label'] as String);
+            actionIds.add(id);
+          }
         }
       }
 
-      displayOptions.add('Beállítások');
-      actionIds.add(9);
-      displayOptions.add('Kilépés');
-      actionIds.add(10);
+      List<int> unselectable = [];
+      for (int i = 0; i < displayOptions.length; i++) {
+        if (displayOptions[i] == '------------------') {
+          unselectable.add(i);
+        }
+      }
 
-      final selection = Select(
-        prompt: 'Folio',
+      final promptText = AppState.instance.isOffline ? 'Folio Főmenü \x1B[1;31m[OFFLINE MÓD]\x1B[0m' : 'Folio Főmenü';
+
+      if (_lastMainMenuIndex >= displayOptions.length) {
+        _lastMainMenuIndex = 0;
+      }
+
+      final selection = CustomMenu(
+        prompt: promptText,
         options: displayOptions,
+        unselectableIndices: unselectable,
+        initialIndex: _lastMainMenuIndex,
       ).interact();
+
+      _lastMainMenuIndex = selection;
 
       final action = actionIds[selection];
 
@@ -291,8 +362,46 @@ class FolioCliApp {
           _clearScreen();
           break;
         case 10:
-          print('Viszlát!');
-          exit(0);
+          _clearScreen();
+          await _showFolioWrapped();
+          _clearScreen();
+          break;
+        case -2:
+          _clearScreen();
+          final List<String> args;
+          final String exe;
+          if (Platform.resolvedExecutable.endsWith('dart') || Platform.resolvedExecutable.endsWith('dart.exe')) {
+            exe = Platform.resolvedExecutable;
+            args = [Platform.script.toFilePath(), 'dash'];
+          } else {
+            exe = Platform.resolvedExecutable;
+            args = ['dash'];
+          }
+          final process = await Process.start(
+            exe,
+            args,
+            mode: ProcessStartMode.inheritStdio,
+          );
+          await process.exitCode;
+          try {
+            if (stdin.hasTerminal) {
+              stdin.echoMode = true;
+              stdin.lineMode = true;
+            }
+          } catch (_) {}
+          forceRestoreConsoleMode();
+          _clearScreen();
+          break;
+        case 100:
+          final confirm = Confirm(
+            prompt: 'Biztos ki akarsz lépni?',
+            defaultValue: false,
+          ).interact();
+          if (confirm) {
+            print('Viszlát!');
+            exit(0);
+          }
+          break;
       }
     }
   }
@@ -322,5 +431,10 @@ class FolioCliApp {
       lines.add(currentLine.trim());
     }
     return lines.isNotEmpty ? lines : [''];
+  }
+
+  void _pause([String message = 'Nyomj Enter-t a folytatáshoz...']) {
+    print('\n\x1B[90m($message)\x1B[0m');
+    stdin.readLineSync();
   }
 }

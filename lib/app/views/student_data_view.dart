@@ -4,6 +4,8 @@ extension FolioCliAppStudentView on FolioCliApp {
   Future<void> _showStudentData() async {
       while (true) {
         if (!await _ensureClientReady()) return;
+        _clearScreen();
+        _showMainMenuBanner();
 
         final action = Select(
           prompt: 'Tanulói adatlap',
@@ -15,15 +17,43 @@ extension FolioCliAppStudentView on FolioCliApp {
         print('\n--- Tanulói adatlap lekérdezése ---');
         final data = await _client!.getStudentData();
         if (data != null) {
-          final name = data.name;
-          final institution = data.institutionName;
-          print('Név: $name');
-          print('Intézmény: $institution');
+          print('Név: \x1B[1;36m${data.name}\x1B[0m');
+          print('Intézmény: ${data.institutionName}');
+          if (data.birthName != null) print('Születési név: ${data.birthName}');
+          if (data.birthPlace != null) print('Születési hely: ${data.birthPlace}');
+          if (data.birthDate != null) {
+            final dateStr = data.birthDate!.split('T').first;
+            print('Születési idő: $dateStr');
+          }
+          if (data.mothersName != null) print('Anyja neve: ${data.mothersName}');
+          if (data.email != null) print('Email cím: ${data.email}');
+          if (data.phone != null) print('Telefonszám: ${data.phone}');
+          if (data.nextDowntime != null) {
+            print('\x1B[33mKarbantartás: A következő tervezett leállás: ${data.nextDowntime!.toLocal()}\x1B[0m');
+          }
+          
+          if (data.addresses.isNotEmpty) {
+            print('\nCímek:');
+            for (var addr in data.addresses) {
+              print(' - $addr');
+            }
+          }
+          
+          if (data.guardians.isNotEmpty) {
+            print('\nGondviselők:');
+            for (var g in data.guardians) {
+              final gName = g['Nev'] ?? 'Ismeretlen';
+              final gEmail = g['EmailCim'] ?? 'Nincs email';
+              final gPhone = g['Telefonszam'] ?? 'Nincs telefonszám';
+              print(' - $gName ($gEmail, $gPhone)');
+            }
+          }
+
           studentUid = data.uid;
         } else {
           print('Nem sikerült lekérdezni az adatokat.');
         }
-        print('');
+        _pause();
       }
     }
 
@@ -35,7 +65,7 @@ extension FolioCliAppStudentView on FolioCliApp {
       final grades = await _client!.getGrades();
       if (grades == null || grades.isEmpty) {
         print('Nincsenek elérhető jegyek a számoláshoz.');
-        Input(prompt: 'Nyomj Enter-t a visszatéréshez...').interact();
+        Utf8Input(prompt: 'Nyomj Enter-t a visszatéréshez...').interact();
         return;
       }
   
@@ -56,7 +86,7 @@ extension FolioCliAppStudentView on FolioCliApp {
   
       if (subjectGrades.isEmpty) {
         print('Nincsenek számítható tantárgyak.');
-        Input(prompt: 'Nyomj Enter-t a visszatéréshez...').interact();
+        Utf8Input(prompt: 'Nyomj Enter-t a visszatéréshez...').interact();
         return;
       }
   
@@ -82,7 +112,7 @@ extension FolioCliAppStudentView on FolioCliApp {
       print('\nKiválasztott tantárgy: $subject');
       print('Jelenlegi átlagod: ${currentAvg.toStringAsFixed(2)}');
   
-      final targetStr = Input(
+      final targetStr = Utf8Input(
         prompt: 'Mi a megcélzott átlag? (pl. 4.5)',
         defaultValue: '4.5',
       ).interact();
@@ -109,7 +139,7 @@ extension FolioCliAppStudentView on FolioCliApp {
       }
       
       print('');
-      Input(prompt: 'Nyomj Enter-t a visszatéréshez...').interact();
+      Utf8Input(prompt: 'Nyomj Enter-t a visszatéréshez...').interact();
     }
 
 }
