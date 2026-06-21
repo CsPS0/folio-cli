@@ -1,7 +1,7 @@
 # Maintainer: Solti Csongor Péter <csps0@users.noreply.github.com>
 pkgname=folio-cli-bin
-pkgver=1.0.3
-pkgrel=2
+pkgver=1.2.3
+pkgrel=1
 pkgdesc="A modern, fast CLI application for the Hungarian Kreta e-diary system."
 arch=('x86_64')
 url="https://github.com/CsPS0/folio-cli"
@@ -10,7 +10,7 @@ options=('!strip')
 provides=('folio-cli')
 conflicts=('folio-cli')
 source=("folio-cli-linux-${pkgver}::https://github.com/CsPS0/folio-cli/releases/download/v${pkgver}/folio-cli-linux")
-sha256sums=('a2fa26b22c19735fddbc802221b04f62cd462443df381be2df650000c213aadf')
+sha256sums=('cd9737fd23a72483d6e2b6b8e9078d2737e0d07a6f1a01617f6bf615a1529f06')
 
 package() {
     install -Dm755 "${srcdir}/folio-cli-linux-${pkgver}" "${pkgdir}/usr/bin/folio-cli"
