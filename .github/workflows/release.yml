@@ -149,39 +149,62 @@ jobs:
       - name: Update Manifests
         run: |
           VERSION=${GITHUB_REF_NAME#v}
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then VERSION="1.2.0"; fi
           
           WIN_HASH=$(sha256sum bin-win/folio-cli.exe | awk '{print $1}')
           LIN_HASH=$(sha256sum bin-lin/folio-cli-linux | awk '{print $1}')
           MAC_HASH=$(sha256sum bin-mac/folio-cli-macos | awk '{print $1}')
           
-          echo "Windows hash: $WIN_HASH"
-          echo "Linux hash: $LIN_HASH"
-          echo "macOS hash: $MAC_HASH"
+          export VERSION WIN_HASH LIN_HASH MAC_HASH
           
-          # Update Scoop json
-          jq --arg ver "$VERSION" --arg hash "$WIN_HASH" \
-            '.version = $ver | .architecture["64bit"].url = "https://github.com/CsPS0/folio-cli/releases/download/v"+$ver+"/folio-cli.exe" | .architecture["64bit"].hash = $hash' \
-            bucket/folio-cli.json > temp.json && mv temp.json bucket/folio-cli.json
-            
-          # Update Homebrew formula version and URLs
-          sed -i "s/version \".*\"/version \"$VERSION\"/g" Formula/folio-cli.rb
-          sed -i "s|releases/download/v.*/folio-cli-macos|releases/download/v$VERSION/folio-cli-macos|g" Formula/folio-cli.rb
-          sed -i "s|releases/download/v.*/folio-cli-linux|releases/download/v$VERSION/folio-cli-linux|g" Formula/folio-cli.rb
+          python3 - << 'EOF'
+          import os, json, re
           
-          # Replace hashes in Formula
-          python3 -c "
-          import re
-          content = open('Formula/folio-cli.rb').read()
-          content = re.sub(r'(on_macos do\s+url.*?\s+sha256\s+\")[a-f0-9]+(\")', r'\g<1>'$MAC_HASH'\g<2>', content, flags=re.DOTALL)
-          content = re.sub(r'(on_linux do\s+url.*?\s+sha256\s+\")[a-f0-9]+(\")', r'\g<1>'$LIN_HASH'\g<2>', content, flags=re.DOTALL)
-          open('Formula/folio-cli.rb', 'w').write(content)
-          "
+          version = os.environ['VERSION']
+          win_hash = os.environ['WIN_HASH']
+          lin_hash = os.environ['LIN_HASH']
+          mac_hash = os.environ['MAC_HASH']
           
-          # Update AUR PKGBUILD version and hash
-          sed -i "s/pkgver=.*/pkgver=$VERSION/g" packaging/PKGBUILD
-          sed -i "s/pkgrel=.*/pkgrel=1/g" packaging/PKGBUILD
-          sed -i "s/sha256sums=.*/sha256sums=('$LIN_HASH')/g" packaging/PKGBUILD
-
+          # 1. Update Scoop manifest
+          scoop_path = 'bucket/folio-cli.json'
+          with open(scoop_path, 'r', encoding='utf-8') as f:
+              scoop_data = json.load(f)
+          
+          scoop_data['version'] = version
+          scoop_data['architecture']['64bit']['url'] = f"https://github.com/CsPS0/folio-cli/releases/download/v{version}/folio-cli.exe"
+          scoop_data['architecture']['64bit']['hash'] = win_hash
+          
+          with open(scoop_path, 'w', encoding='utf-8') as f:
+              json.dump(scoop_data, f, indent=4)
+          
+          # 2. Update Homebrew formula
+          brew_path = 'Formula/folio-cli.rb'
+          with open(brew_path, 'r', encoding='utf-8') as f:
+              content = f.read()
+          
+          content = re.sub(r'version \".*?\"', f'version "{version}"', content)
+          content = re.sub(r'releases/download/v.*/folio-cli-macos', f'releases/download/v{version}/folio-cli-macos', content)
+          content = re.sub(r'releases/download/v.*/folio-cli-linux', f'releases/download/v{version}/folio-cli-linux', content)
+          
+          content = re.sub(r'(on_macos do\s+url.*?\s+sha256\s+\")[a-f0-9]+(\")', r'\g<1>' + mac_hash + r'\g<2>', content, flags=re.DOTALL)
+          content = re.sub(r'(on_linux do\s+url.*?\s+sha256\s+\")[a-f0-9]+(\")', r'\g<1>' + lin_hash + r'\g<2>', content, flags=re.DOTALL)
+          
+          with open(brew_path, 'w', encoding='utf-8') as f:
+              f.write(content)
+          
+          # 3. Update AUR PKGBUILD
+          aur_path = 'packaging/PKGBUILD'
+          with open(aur_path, 'r', encoding='utf-8') as f:
+              content = f.read()
+          
+          content = re.sub(r'pkgver=.*', f'pkgver={version}', content)
+          content = re.sub(r'pkgrel=.*', 'pkgrel=1', content)
+          content = re.sub(r'sha256sums=\(\'.*?\'\)', f"sha256sums=('{lin_hash}')", content)
+          
+          with open(aur_path, 'w', encoding='utf-8') as f:
+              f.write(content)
+          EOF
+          
           # Configure Git and Push
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
