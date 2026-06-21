@@ -1,13 +1,13 @@
 Package: folio-cli
-Version: 1.2.0
+Version: 1.2.1
 Architecture: amd64
 Maintainer: Solti Csongor Péter <csps0@users.noreply.github.com>
 Priority: optional
 Section: utils
-Filename: pool/main/f/folio-cli/folio-cli_1.2.0_amd64.deb
-Size: 2770250
-SHA256: b73adc914483086058fedb02fed809ca03750946aa9e449dc7242a84b53c3079
-SHA1: c0221c7ec5da1fdce6e4d8f4e7144d66ef8bd40b
-MD5sum: 8aceafb6a76f882c4053677ea5716cee
+Filename: pool/main/f/folio-cli/folio-cli_1.2.1_amd64.deb
+Size: 2770314
+SHA256: 95aa8a9089b51e9279c502008d668c5a20000652659753b5b7b230cdcbea375d
+SHA1: 3320b17839eece52d6629acb38c882544cb3fc33
+MD5sum: 8857ca0de2a853cf36f846cc748c9fd9
 Description: Terminal-based client for the Hungarian Kréta electronic school diary system.
 
