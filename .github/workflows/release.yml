@@ -127,6 +127,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Download Windows Binary
         uses: actions/download-artifact@v4
@@ -210,4 +212,4 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add bucket/folio-cli.json Formula/folio-cli.rb packaging/PKGBUILD
           git commit -m "chore: auto-update scoop, homebrew, and aur manifests to v$VERSION [skip ci]"
-          git push
+          git push origin HEAD:main
