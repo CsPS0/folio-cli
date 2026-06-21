@@ -1,17 +1,17 @@
 Codename: stable
-Date: Wed, 10 Jun 2026 13:58:19 UTC
+Date: Sun, 21 Jun 2026 14:48:11 UTC
 Architectures: amd64
 Components: main
 Description: CsPS0/folio-cli
 MD5Sum:
- 1e2f8c6b3b10a9ad9d736f60d16b0e0b 480 main/binary-amd64/Packages
- 238f7d4e3eb4367414f8d29043716f35 373 main/binary-amd64/Packages.gz
+ 2dbc01e11af479fb6265d0a1d2e02ff0 480 main/binary-amd64/Packages
+ 7718381df55f9d77e13b2e17ffc30df3 376 main/binary-amd64/Packages.gz
  66679a74d792f03ea67a27c381bf4fa0 65 main/binary-amd64/Release
 SHA1:
- c75021804fc683e696859a6afbe2294d09d63796 480 main/binary-amd64/Packages
- 7175c4650a8c5dbe396f2e48ff7bec78090a3f75 373 main/binary-amd64/Packages.gz
+ daa4a7f15376da8518fcb9193e3b2964160dcd89 480 main/binary-amd64/Packages
+ 89002c78e8f4641e83f2818af232542ce30850d9 376 main/binary-amd64/Packages.gz
  e910a8a18febd6111a5cee10bbb2d894bfe68cd3 65 main/binary-amd64/Release
 SHA256:
- 4ce6fcec19ebcbc77de34af11d9263205d6ef9e0e1e2fa621a04d3c0e0a3fd8c 480 main/binary-amd64/Packages
- 7de45be0ed819d74c38ddae74f33954901fd30feb36b98475ac8d4a39d1ceb8f 373 main/binary-amd64/Packages.gz
+ f6e31d63d22d0037455ee468074dee8307b0bdf89439e3f0ee0dbfc38094d9be 480 main/binary-amd64/Packages
+ 30d9a57c28dbf2835147ce26ba20e5995393e238db162bd2bcf85209324deb7f 376 main/binary-amd64/Packages.gz
  253936168b464c1a23e98557e5c42c853d0b5f292004574918f2bbcab888d35d 65 main/binary-amd64/Release
